@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -13,6 +14,7 @@ import {
   Shield,
   Sparkles,
 } from "lucide-react";
+import { login, type LoginPayload } from "@/lib/api";
 
 const trustSignals = ["Cold Chain", "CPG", "Manufacturing", "Life Sciences"];
 const ssoProviders = ["Azure AD", "Okta", "Google", "SAP ID"];
@@ -26,6 +28,20 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+
+  const loginMutation = useMutation({
+    mutationFn: (payload: LoginPayload) => login(payload),
+    onMutate: () => {
+      setStatusMessage(null);
+    },
+    onSuccess: (response) => {
+      setStatusMessage(response.message ?? "Authenticated");
+    },
+    onError: (error: Error) => {
+      setStatusMessage(error.message || "Unable to authenticate");
+    },
+  });
 
   const featureHighlights = useMemo(
     () => [
@@ -131,6 +147,7 @@ export default function LoginPage() {
             className="space-y-6"
             onSubmit={(event) => {
               event.preventDefault();
+              loginMutation.mutate({ email, password, rememberMe });
             }}
           >
             <div>
@@ -176,11 +193,22 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              className="w-full transform rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500 px-4 py-3 font-medium text-white transition-all hover:scale-[1.02] hover:from-blue-600 hover:to-cyan-600"
+              disabled={loginMutation.isPending}
+              className="w-full transform rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500 px-4 py-3 font-medium text-white transition-all hover:scale-[1.02] hover:from-blue-600 hover:to-cyan-600 disabled:cursor-not-allowed disabled:opacity-70"
             >
-              Sign In to Oru
+              {loginMutation.isPending ? "Validating…" : "Sign In to Oru"}
             </button>
           </form>
+
+          {statusMessage && (
+            <div
+              className={`mt-4 rounded-xl border px-4 py-3 text-sm ${
+                loginMutation.isError ? "border-red-200 bg-red-50 text-red-700" : "border-green-200 bg-green-50 text-green-700"
+              }`}
+            >
+              {statusMessage}
+            </div>
+          )}
 
           <div className="mt-8 space-y-6">
             <Divider label="Or continue with SSO" />

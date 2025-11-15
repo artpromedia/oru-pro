@@ -1,0 +1,166 @@
+// Prompt 2 – Precision manufacturing + shopfloor execution schema
+
+enum MachineStatus {
+  IDLE
+  RUNNING
+  MAINTENANCE
+  DOWN
+}
+
+enum ShiftType {
+  DAY
+  SWING
+  NIGHT
+}
+
+enum MeasurementMethod {
+  LASER_PROBE
+  CONTACT_SCANNER
+  VISION_SYSTEM
+  MANUAL_GAUGE
+}
+
+enum NonconformanceSeverity {
+  MINOR
+  MAJOR
+  CRITICAL
+}
+
+enum ToolState {
+  AVAILABLE
+  INSTALLED
+  NEEDS_REPLACEMENT
+}
+
+model PrecisionProduct {
+  id                     String               @id @default(cuid())
+  partNumber             String               @unique
+  revision               String               @default("A")
+  description            String
+  tolerancePpm           Int                  @default(50)
+  targetCycleTimeSeconds Int
+  bomVersion             String
+  workInstructions       WorkInstruction[]
+  processParameters      ProcessParameter[]
+  qualityMeasurements    QualityMeasurement[]
+  nonconformances        NonconformanceReport[]
+  createdAt              DateTime             @default(now())
+  updatedAt              DateTime             @updatedAt
+}
+
+model CNCMachine {
+  id               String              @id @default(cuid())
+  assetTag         String              @unique
+  model            String
+  axisCount        Int
+  capability       String
+  status           MachineStatus       @default(IDLE)
+  currentShift     ShiftType?
+  cell             String
+  toolState        ToolState           @default(AVAILABLE)
+  schedules        MachineSchedule[]
+  telemetry        MachineTelemetry[]
+  changeovers      ToolingChangeover[]
+  qualityReadings  QualityMeasurement[]
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+}
+
+model MachineSchedule {
+  id               String       @id @default(cuid())
+  machine          CNCMachine   @relation(fields: [machineId], references: [id])
+  machineId        String
+  product          PrecisionProduct? @relation(fields: [productId], references: [id])
+  productId        String?
+  scheduleDate     DateTime
+  shiftType        ShiftType
+  operator         String
+  plannedJob       String
+  runStart         DateTime?
+  runEnd           DateTime?
+  scrapCount       Int           @default(0)
+  goodCount        Int           @default(0)
+  nonconformances  NonconformanceReport[]
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+}
+
+model ToolingChangeover {
+  id             String        @id @default(cuid())
+  machine        CNCMachine    @relation(fields: [machineId], references: [id])
+  machineId      String
+  product        PrecisionProduct? @relation(fields: [productId], references: [id])
+  productId      String?
+  startedAt      DateTime      @default(now())
+  completedAt    DateTime?
+  durationMinutes Int?
+  reason         String?
+  technician     String
+}
+
+model WorkInstruction {
+  id            String           @id @default(cuid())
+  product       PrecisionProduct @relation(fields: [productId], references: [id])
+  productId     String
+  stepNumber    Int
+  title         String
+  instruction   String
+  mediaUrl      String?
+  lastReviewed  DateTime         @default(now())
+}
+
+model ProcessParameter {
+  id            String           @id @default(cuid())
+  product       PrecisionProduct @relation(fields: [productId], references: [id])
+  productId     String
+  operation     String
+  parameterName String
+  targetValue   Float
+  minValue      Float
+  maxValue      Float
+  unit          String
+  sensorTag     String?
+  updatedAt     DateTime         @updatedAt
+}
+
+model QualityMeasurement {
+  id             String            @id @default(cuid())
+  product        PrecisionProduct  @relation(fields: [productId], references: [id])
+  productId      String
+  machine        CNCMachine?       @relation(fields: [machineId], references: [id])
+  machineId      String?
+  schedule       MachineSchedule?  @relation(fields: [scheduleId], references: [id])
+  scheduleId     String?
+  measurement    String
+  method         MeasurementMethod
+  measuredValue  Float
+  lowerLimit     Float
+  upperLimit     Float
+  inspector      String
+  measuredAt     DateTime          @default(now())
+}
+
+model NonconformanceReport {
+  id                 String            @id @default(cuid())
+  product            PrecisionProduct  @relation(fields: [productId], references: [id])
+  productId          String
+  schedule           MachineSchedule?  @relation(fields: [scheduleId], references: [id])
+  scheduleId         String?
+  severity           NonconformanceSeverity
+  description        String
+  containmentAction  String?
+  rootCause          String?
+  correctiveAction   String?
+  owner              String
+  detectedAt         DateTime          @default(now())
+  resolvedAt         DateTime?
+}
+
+model MachineTelemetry {
+  id          String      @id @default(cuid())
+  machine     CNCMachine  @relation(fields: [machineId], references: [id])
+  machineId   String
+  metricName  String
+  metricValue Float
+  recordedAt  DateTime    @default(now())
+}

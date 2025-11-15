@@ -1,0 +1,60 @@
+// Automotive Manufacturing Extensions
+model VehicleModel {
+  id              String   @id
+  modelCode       String   @unique
+  platform        String
+  modelYear       Int
+  variant         String
+  bom             Json // Bill of Materials with thousands of parts
+  assemblySequence Json
+  taktTime        Int // seconds
+  qualityGates    Json[]
+}
+
+model SupplyChainTier {
+  id                  String   @id
+  supplierCode        String
+  tier                Int // 1, 2, 3
+  parts               String[]
+  justInTime          Boolean
+  kanbanSignals       Json
+  ediIntegration      Boolean
+  qualityRating       Decimal
+  deliveryPerformance Decimal
+  contingencySupplier String?
+}
+
+model ProductionLine {
+  id             String  @id
+  lineCode       String
+  stationType    String // Body, Paint, Assembly, etc.
+  capacity       Int // units per day
+  currentVIN     String?
+  sequenceNumber Int
+  andonStatus    String
+  qualityDefects Json[]
+  cycleTime      Int
+}
+
+model QualityGate {
+  id             String  @id
+  gateNumber     Int
+  gateName       String // Fit & Finish, Electrical, Water Test
+  vin            String
+  defects        Json[]
+  reworkRequired Boolean
+  passStatus     Boolean
+  torqueData     Json[]
+  gapFlushData   Json[]
+}
+
+model VehicleRecall {
+  id             String   @id
+  recallNumber   String
+  affectedVINs   String[]
+  component      String
+  supplier       String
+  safetyRisk     String
+  remediation    String
+  nhtsaCampaign  String?
+}

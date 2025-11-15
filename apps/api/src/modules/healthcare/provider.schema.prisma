@@ -1,0 +1,48 @@
+// Healthcare Provider Extensions
+model PatientFlow {
+  id                 String  @id
+  patientId          String
+  admissionType      String // Emergency, Scheduled, Transfer
+  department         String
+  bedAssignment      String?
+  acuityLevel        Int // 1-5
+  lengthOfStay       Int?
+  dischargeDisposition String?
+  readmissionRisk    Float
+}
+
+model MedicalSupplies {
+  id              String  @id
+  itemCode        String  @unique
+  category        String // Surgical, PPE, Pharmaceutical
+  parLevel        Int
+  currentStock    Int
+  expiryTracked   Boolean
+  lotNumbers      String[]
+  implantable     Boolean
+  fdaClass        String? // Class I, II, III
+  sterilizationDate DateTime?
+}
+
+model OperatingRoom {
+  id               String  @id
+  orNumber         String
+  status           String // Available, Occupied, Turnover, Maintenance
+  currentProcedure String?
+  surgeonId        String?
+  nextCase         DateTime?
+  utilizationRate  Decimal
+  turnaroundTime   Int // minutes
+  equipmentStatus  Json
+}
+
+model ClinicalPathway {
+  id           String  @id
+  pathwayName  String // Hip Replacement, Cardiac Cath
+  drg          String // Diagnosis Related Group
+  expectedLOS  Int // days
+  steps        Json[]
+  outcomes     Json
+  costPerCase  Decimal
+  qualityMetrics Json
+}

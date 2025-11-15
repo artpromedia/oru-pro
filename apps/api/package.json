@@ -40,6 +40,6 @@
     "@types/winston": "2.4.4",
   "eslint": "9.11.1",
     "tsx": "4.10.0",
-    "typescript": "5.7.2"
+    "typescript": "5.6.3"
   }
 }

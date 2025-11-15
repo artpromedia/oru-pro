@@ -45,3 +45,165 @@ model AgentHeartbeat {
   payload    Json
   createdAt  DateTime @default(now())
 }
+
+// Automotive Manufacturing Extensions
+model VehicleModel {
+  id               String @id
+  modelCode        String @unique
+  platform         String
+  modelYear        Int
+  variant          String
+  bom              Json
+  assemblySequence Json
+  taktTime         Int
+  qualityGates     Json[]
+}
+
+model SupplyChainTier {
+  id                  String  @id
+  supplierCode        String
+  tier                Int
+  parts               String[]
+  justInTime          Boolean
+  kanbanSignals       Json
+  ediIntegration      Boolean
+  qualityRating       Decimal
+  deliveryPerformance Decimal
+  contingencySupplier String?
+}
+
+model ProductionLine {
+  id             String @id
+  lineCode       String
+  stationType    String
+  capacity       Int
+  currentVIN     String?
+  sequenceNumber Int
+  andonStatus    String
+  qualityDefects Json[]
+  cycleTime      Int
+}
+
+model QualityGate {
+  id             String @id
+  gateNumber     Int
+  gateName       String
+  vin            String
+  defects        Json[]
+  reworkRequired Boolean
+  passStatus     Boolean
+  torqueData     Json[]
+  gapFlushData   Json[]
+}
+
+model VehicleRecall {
+  id            String  @id
+  recallNumber  String
+  affectedVINs  String[]
+  component     String
+  supplier      String
+  safetyRisk    String
+  remediation   String
+  nhtsaCampaign String?
+}
+
+// Healthcare Provider Extensions
+model PatientFlow {
+  id                   String  @id
+  patientId            String
+  admissionType        String
+  department           String
+  bedAssignment        String?
+  acuityLevel          Int
+  lengthOfStay         Int?
+  dischargeDisposition String?
+  readmissionRisk      Float
+}
+
+model MedicalSupplies {
+  id               String   @id
+  itemCode         String   @unique
+  category         String
+  parLevel         Int
+  currentStock     Int
+  expiryTracked    Boolean
+  lotNumbers       String[]
+  implantable      Boolean
+  fdaClass         String?
+  sterilizationDate DateTime?
+}
+
+model OperatingRoom {
+  id               String  @id
+  orNumber         String
+  status           String
+  currentProcedure String?
+  surgeonId        String?
+  nextCase         DateTime?
+  utilizationRate  Decimal
+  turnaroundTime   Int
+  equipmentStatus  Json
+}
+
+model ClinicalPathway {
+  id             String  @id
+  pathwayName    String
+  drg            String
+  expectedLOS    Int
+  steps          Json[]
+  outcomes       Json
+  costPerCase    Decimal
+  qualityMetrics Json
+}
+
+// Logistics & Transportation Extensions
+model Fleet {
+  id              String  @id
+  vehicleId       String  @unique
+  type            String
+  capacity        Json
+  currentLocation Json
+  status          String
+  driver          String?
+  fuelLevel       Float
+  nextMaintenance DateTime
+  iotTelemetry    Json
+}
+
+model Route {
+  id                String @id
+  routeNumber       String
+  origin            String
+  destination       String
+  stops             Json[]
+  distance          Float
+  estimatedTime     Int
+  actualTime        Int?
+  fuelConsumption   Float
+  trafficConditions String
+  weatherImpact     String?
+  optimization      Json
+}
+
+model CrossDock {
+  id                String  @id
+  facilityCode      String
+  inboundShipments  Json[]
+  outboundShipments Json[]
+  sortingLanes      Int
+  throughputRate    Int
+  dwellTime         Int
+  missortRate       Decimal
+}
+
+model LastMile {
+  id                   String  @id
+  deliveryId           String
+  customerLocation     Json
+  timeWindow           Json
+  deliveryAttempts     Int
+  proofOfDelivery      String?
+  customerSatisfaction Int?
+  deliveryCost         Decimal
+  alternativeDelivery  String?
+}

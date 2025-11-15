@@ -1,0 +1,51 @@
+// Logistics & Transportation Extensions
+model Fleet {
+  id             String   @id
+  vehicleId      String   @unique
+  type           String // Truck, Van, Refrigerated
+  capacity       Json // Weight, volume, pallets
+  currentLocation Json // GPS coordinates
+  status         String // Available, In-Transit, Maintenance
+  driver         String?
+  fuelLevel      Float
+  nextMaintenance DateTime
+  iotTelemetry   Json // Speed, temp, diagnostics
+}
+
+model Route {
+  id               String  @id
+  routeNumber      String
+  origin           String
+  destination      String
+  stops            Json[]
+  distance         Float
+  estimatedTime    Int // minutes
+  actualTime       Int?
+  fuelConsumption  Float
+  trafficConditions String
+  weatherImpact    String?
+  optimization     Json // AI optimized route
+}
+
+model CrossDock {
+  id             String   @id
+  facilityCode   String
+  inboundShipments Json[]
+  outboundShipments Json[]
+  sortingLanes   Int
+  throughputRate Int // packages per hour
+  dwellTime      Int // average minutes
+  missortRate    Decimal
+}
+
+model LastMile {
+  id                  String   @id
+  deliveryId          String
+  customerLocation    Json
+  timeWindow          Json // Preferred delivery time
+  deliveryAttempts    Int
+  proofOfDelivery     String?
+  customerSatisfaction Int?
+  deliveryCost        Decimal
+  alternativeDelivery String? // Locker, neighbor
+}

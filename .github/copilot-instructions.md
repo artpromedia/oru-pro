@@ -58,6 +58,14 @@
   - Ask for clarification before adding assumed features.
   - Consult VS Code API docs when building VS Code extensions.
 
+- **Prompt Coverage Updates**
+  - `/pharma/validation` implements Prompt 1's GMP validation cockpit with release queue telemetry, cold-chain risk segmentation, and QA copilot recommendations.
+  - `/manufacturing/shopfloor` implements Prompt 2's precision manufacturing console with cell-level OEE, changeover automation, and AI optimization queue.
+  - `/retail/operations` implements Prompt 3's omni-channel operations hub with channel mix analytics, fulfillment waves, and loyalty/promo experiments.
+  - `/intelligence/agents` implements Prompt 10's agent management & monitoring dashboard with active agent roster, decision telemetry, and control panel.
+  - `/mobile/warehouse` implements Prompt 11's warehouse companion optimized for mobile crews with scanning workflow, route guidance, and dock visibility.
+  - `/composer` implements Prompt 12's drag-and-drop workflow composer with component library, canvas, live validation, and node property inspector.
+
 - **Task Completion Rules**
   - Project scaffolding must compile without errors.
   - Keep this instructions file and README up to date.

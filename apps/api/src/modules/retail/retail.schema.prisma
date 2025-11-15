@@ -1,0 +1,189 @@
+// Prompt 3 – Retail + e-commerce orchestration schema
+
+enum ChannelType {
+  DTC
+  MARKETPLACE
+  WHOLESALE
+  STORE
+}
+
+enum FulfillmentStatus {
+  QUEUED
+  PICKING
+  PACKED
+  SHIPPED
+  DELIVERED
+  CANCELED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum PromotionType {
+  PRICE_DROP
+  BOGO
+  BUNDLE
+  FLASH_SALE
+}
+
+enum StoreFormat {
+  FLAGSHIP
+  OUTLET
+  DARK_STORE
+  POP_UP
+  DISTRIBUTION_CENTER
+}
+
+model RetailProduct {
+  id                String               @id @default(cuid())
+  sku               String               @unique
+  name              String
+  brand             String
+  category          String
+  subcategory       String?
+  lifecyclePhase    String               @default("active")
+  msrp              Decimal              @default(0)
+  floorPrice        Decimal              @default(0)
+  safetyStock       Int                  @default(0)
+  reorderPoint      Int                  @default(0)
+  leadTimeDays      Int                  @default(5)
+  onlineAvailability Boolean             @default(true)
+  forecastBiasPct   Float                @default(0)
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  inventory         InventorySnapshot[]
+  demandSignals     DemandSignal[]
+  promotions        PromotionEvent[]
+  orderLines        OrderLine[]
+}
+
+model Store {
+  id              String               @id @default(cuid())
+  code            String               @unique
+  name            String
+  region          String
+  timezone        String               @default("UTC")
+  format          StoreFormat          @default(FLAGSHIP)
+  squareFeet      Int?
+  capacityUnits   Int                  @default(0)
+  digitalHub      Boolean              @default(false)
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  inventory       InventorySnapshot[]
+  orders          OmniOrder[]
+  fulfillment     FulfillmentTask[]
+  loyaltyActivity LoyaltyInteraction[]
+}
+
+model InventorySnapshot {
+  id            String       @id @default(cuid())
+  store         Store        @relation(fields: [storeId], references: [id])
+  storeId       String
+  product       RetailProduct @relation(fields: [productId], references: [id])
+  productId     String
+  onHand        Int
+  reserved      Int           @default(0)
+  inTransit     Int           @default(0)
+  backordered   Int           @default(0)
+  daysOfSupply  Float
+  snapshotDate  DateTime      @default(now())
+}
+
+model DemandSignal {
+  id            String         @id @default(cuid())
+  product       RetailProduct  @relation(fields: [productId], references: [id])
+  productId     String
+  channel       ChannelType
+  signalSource  String
+  units         Int
+  conversionPct Float?
+  anomalyScore  Float?
+  recordedAt    DateTime       @default(now())
+}
+
+model OmniOrder {
+  id             String            @id @default(cuid())
+  orderNumber    String            @unique
+  channel        ChannelType
+  store          Store?            @relation(fields: [storeId], references: [id])
+  storeId        String?
+  status         FulfillmentStatus @default(QUEUED)
+  customerEmail  String?
+  orderTotal     Decimal           @default(0)
+  itemCount      Int               @default(0)
+  promisedShip   DateTime?
+  placedAt       DateTime          @default(now())
+  orderLines     OrderLine[]
+  fulfillment    FulfillmentTask[]
+}
+
+model OrderLine {
+  id          String        @id @default(cuid())
+  order       OmniOrder     @relation(fields: [orderId], references: [id])
+  orderId     String
+  product     RetailProduct @relation(fields: [productId], references: [id])
+  productId   String
+  quantity    Int
+  unitPrice   Decimal        @default(0)
+  discountPct Float          @default(0)
+}
+
+model FulfillmentTask {
+  id             String            @id @default(cuid())
+  order          OmniOrder         @relation(fields: [orderId], references: [id])
+  orderId        String
+  store          Store?            @relation(fields: [storeId], references: [id])
+  storeId        String?
+  status         FulfillmentStatus @default(QUEUED)
+  priority       TaskPriority      @default(MEDIUM)
+  assignedTo     String?
+  waveNumber     String?
+  dueAt          DateTime?
+  startedAt      DateTime?
+  completedAt    DateTime?
+  notes          String?
+}
+
+model PromotionEvent {
+  id            String         @id @default(cuid())
+  product       RetailProduct  @relation(fields: [productId], references: [id])
+  productId     String
+  promotionType PromotionType
+  liftPercent   Float          @default(0)
+  budget        Decimal        @default(0)
+  owner         String
+  startDate     DateTime
+  endDate       DateTime
+  channels      ChannelType[]
+}
+
+model LoyaltyProfile {
+  id             String               @id @default(cuid())
+  memberId       String               @unique
+  tier           String               @default("silver")
+  pointsBalance  Int                  @default(0)
+  lifetimeValue  Decimal              @default(0)
+  preferredStore Store?               @relation(fields: [preferredStoreId], references: [id])
+  preferredStoreId String?
+  aiPersona      String?
+  optInMarketing Boolean              @default(true)
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  interactions   LoyaltyInteraction[]
+}
+
+model LoyaltyInteraction {
+  id             String          @id @default(cuid())
+  loyaltyProfile LoyaltyProfile  @relation(fields: [loyaltyProfileId], references: [id])
+  loyaltyProfileId String
+  store          Store?          @relation(fields: [storeId], references: [id])
+  storeId        String?
+  actionType     String
+  pointsEarned   Int             @default(0)
+  metadata       Json?
+  occurredAt     DateTime        @default(now())
+}
