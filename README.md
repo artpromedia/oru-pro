@@ -63,6 +63,18 @@ pnpm test
 
 Python services rely on uv or pip; each folder contains its own `pyproject.toml`. Use `uv sync` or `pip install -e .` as preferred.
 
+## Notes
+
+- Login, operations dashboard, and inventory management screens in `apps/web` are now fully aligned with the latest prompt-provided TSX specs, including the refreshed hero, KPI donuts, QA workflows, and AI recommendation blocks.
+- `pnpm --filter web build` passes, so the Next.js frontend is production-build ready after the most recent UI refresh.
+- Back-end services and agents remain unchanged from the initial import; no additional migrations or schema updates were required for this UI iteration.
+
+## Next steps
+
+1. Gather any revised prompt copy or new feature requirements for the operations dashboard or inventory flows and mirror them in the corresponding App Router routes.
+2. Wire the login form and dashboard widgets into live data sources (auth service, tRPC procedures, agent telemetry) as APIs land.
+3. Re-run the web build and top-level turborepo pipelines (`pnpm build`, `pnpm lint`, `pnpm test`) once new integrations land to keep the monorepo healthy.
+
 ## License
 
 Proprietary – internal use for the Oru program.
