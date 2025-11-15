@@ -1,0 +1,4 @@
+
+> sap-rfc-client@0.1.0 build C:\Users\ofema\Oru-Pro\packages\sap-rfc-client
+> tsc -p tsconfig.json
+

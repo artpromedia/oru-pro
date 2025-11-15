@@ -1,0 +1,4 @@
+
+> @oru/shared@0.1.0 build C:\Users\ofema\Oru-Pro\packages\shared
+> tsc -p tsconfig.json
+

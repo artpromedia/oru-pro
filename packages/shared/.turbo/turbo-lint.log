@@ -1,0 +1,4 @@
+
+> @oru/shared@0.1.0 lint C:\Users\ofema\Oru-Pro\packages\shared
+> eslint "src/**/*.ts"
+

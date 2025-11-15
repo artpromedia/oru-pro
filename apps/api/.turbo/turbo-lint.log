@@ -1,0 +1,4 @@
+
+> @oru/api@0.1.0 lint C:\Users\ofema\Oru-Pro\apps\api
+> eslint "src/**/*.ts"
+

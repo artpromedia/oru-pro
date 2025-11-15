@@ -1,0 +1,14 @@
+[project]
+name = "oru-agent-sdk"
+version = "0.1.0"
+description = "Shared base classes for Oru decision agents"
+authors = [{ name = "Oru" }]
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi[all]==0.115.0",
+  "pydantic==2.7.4",
+  "celery[redis]==5.4.0"
+]
+
+[tool.setuptools]
+packages = ["oru_agent_sdk"]

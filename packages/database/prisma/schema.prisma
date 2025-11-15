@@ -1,0 +1,47 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Facility {
+  id          String      @id @default(cuid())
+  name        String
+  timezone    String      @default("UTC")
+  inventory   Inventory[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Inventory {
+  id           String   @id @default(cuid())
+  facility     Facility @relation(fields: [facilityId], references: [id])
+  facilityId   String
+  sku          String
+  quantityOnHand Float
+  quantityOnHold Float   @default(0)
+  uom          String
+  qaState      String    @default("released")
+  updatedAt    DateTime  @updatedAt
+  createdAt    DateTime  @default(now())
+}
+
+model ProductionOrder {
+  id          String   @id @default(cuid())
+  bomCode     String
+  status      String   @default("planned")
+  plannedDate DateTime
+  actualDate  DateTime?
+}
+
+model AgentHeartbeat {
+  id         String   @id @default(cuid())
+  agentName  String
+  queueName  String
+  status     String
+  payload    Json
+  createdAt  DateTime @default(now())
+}

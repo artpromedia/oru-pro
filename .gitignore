@@ -1,0 +1,17 @@
+node_modules
+.pnpm-store
+.next
+.env
+.env.local
+.env.production
+coverage
+artifacts
+dist
+build
+.prisma
+__pycache__
+*.pyc
+.venv
+.mypy_cache
+.idea
+.DS_Store

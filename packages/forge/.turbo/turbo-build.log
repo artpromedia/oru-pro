@@ -1,0 +1,4 @@
+
+> @oru/forge@0.1.0 build C:\Users\ofema\Oru-Pro\packages\forge
+> tsc -p tsconfig.json
+

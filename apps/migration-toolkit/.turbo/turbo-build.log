@@ -1,0 +1,4 @@
+
+> @oru/migration-toolkit@0.1.0 build C:\Users\ofema\Oru-Pro\apps\migration-toolkit
+> tsc -p tsconfig.json
+

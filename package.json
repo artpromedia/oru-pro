@@ -1,0 +1,36 @@
+{
+  "name": "oru-pro",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@9.1.0",
+  "engines": {
+    "node": ">=20.10.0"
+  },
+  "scripts": {
+    "setup": "pnpm install && pnpm prisma:generate",
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test",
+    "prisma:generate": "pnpm --filter packages/database prisma generate"
+  },
+  "devDependencies": {
+    "turbo": "2.1.0",
+  "typescript": "5.7.2",
+  "eslint": "9.11.1",
+  "@eslint/js": "9.11.1",
+  "@typescript-eslint/eslint-plugin": "8.12.1",
+  "@typescript-eslint/parser": "8.12.1",
+  "typescript-eslint": "8.12.1",
+    "prettier": "3.3.3",
+    "eslint-config-prettier": "10.1.1",
+    "@types/node": "20.16.5"
+  },
+  "pnpm": {
+    "overrides": {
+      "react": "18.3.1",
+      "react-dom": "18.3.1"
+    }
+  }
+}

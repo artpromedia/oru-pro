@@ -1,0 +1,4 @@
+
+> @oru/ui@0.1.0 lint C:\Users\ofema\Oru-Pro\packages\ui
+> eslint "src/**/*.{ts,tsx}"
+

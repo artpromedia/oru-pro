@@ -1,0 +1,4 @@
+
+> @oru/composer@0.1.0 lint C:\Users\ofema\Oru-Pro\packages\composer
+> eslint "src/**/*.ts"
+
