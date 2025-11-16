@@ -137,9 +137,9 @@ export default function LoginPage() {
         >
           <div className="mb-10 text-center">
             <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 text-2xl font-semibold text-white">
-              Oru
+              Oonru
             </div>
-            <h2 className="mt-4 text-3xl font-semibold text-slate-900">Welcome to the Oru Portal</h2>
+            <h2 className="mt-4 text-3xl font-semibold text-slate-900">Welcome to the Oonru Portal</h2>
             <p className="mt-1 text-sm text-slate-500">The Autonomous Enterprise Platform</p>
           </div>
 
@@ -196,7 +196,7 @@ export default function LoginPage() {
               disabled={loginMutation.isPending}
               className="w-full transform rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500 px-4 py-3 font-medium text-white transition-all hover:scale-[1.02] hover:from-blue-600 hover:to-cyan-600 disabled:cursor-not-allowed disabled:opacity-70"
             >
-              {loginMutation.isPending ? "Validating…" : "Sign In to Oru"}
+              {loginMutation.isPending ? "Validating…" : "Sign In to Oonru"}
             </button>
           </form>
 

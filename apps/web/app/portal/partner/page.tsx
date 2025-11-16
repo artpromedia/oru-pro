@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Card, Button } from "@oru/ui";
 
 export const metadata: Metadata = {
-  title: "Partner Portal | Oru",
+  title: "Partner Portal | Oonru",
   description: "Collaborate with 3PLs, suppliers, and enterprise buyers in one operations-first workspace"
 };
 

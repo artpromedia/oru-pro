@@ -46,5 +46,14 @@ export default [
       }
     }
   },
+  {
+    files: ["apps/mobile/**/*.{ts,tsx}"],
+    languageOptions: {
+      parserOptions: {
+        tsconfigRootDir: __dirname,
+        project: ["apps/mobile/tsconfig.json"]
+      }
+    }
+  },
   prettierConfig
 ];

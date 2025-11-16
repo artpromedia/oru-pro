@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { ComponentType, SVGProps } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
@@ -23,6 +22,7 @@ import {
   MessageSquare,
   FileText,
   X,
+  type LucideIcon,
 } from "lucide-react";
 import {
   columnOrder,
@@ -355,7 +355,7 @@ function ProjectCard({ project }: ProjectCardProps) {
 }
 
 interface StatCardProps {
-  icon: ComponentType<SVGProps<SVGSVGElement>>;
+  icon: LucideIcon;
   label: string;
   value: string;
   trend?: string;
@@ -509,7 +509,7 @@ function ProjectDetailsPanel({ project, onClose }: ProjectDetailsPanelProps) {
 }
 
 interface InfoBlockProps {
-  icon: ComponentType<SVGProps<SVGSVGElement>>;
+  icon: LucideIcon;
   title: string;
   content: string[];
   variant?: "alert" | "success" | "default";

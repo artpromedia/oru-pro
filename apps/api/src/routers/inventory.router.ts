@@ -1,8 +1,8 @@
 import { EventEmitter } from "node:events";
 import { observable } from "@trpc/server/observable";
 import { z } from "zod";
+import type { Prisma } from "@prisma/client";
 import { router, publicProcedure } from "../trpc.js";
-import type { Context } from "../context.js";
 
 const stockEvents = new EventEmitter();
 
@@ -62,7 +62,7 @@ const publishStockEvent = (event: StockEvent) => {
   stockEvents.emit("stock", event);
 };
 
-type PrismaScope = Context["prisma"];
+type PrismaScope = Prisma.TransactionClient;
 
 const ensureInventoryRecord = async (prisma: PrismaScope, facilityId: string, sku: string, uom: string) => {
   const existing = await prisma.inventory.findFirst({ where: { facilityId, sku } });

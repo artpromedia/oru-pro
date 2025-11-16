@@ -13,7 +13,7 @@
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
     "test": "turbo test",
-    "prisma:generate": "pnpm --filter packages/database prisma generate"
+  "prisma:generate": "pnpm --filter @oru/database run generate"
   },
   "devDependencies": {
     "turbo": "2.1.0",

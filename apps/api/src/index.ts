@@ -2,21 +2,18 @@ import cors from "cors";
 import express, { type Request, type Response } from "express";
 import http from "node:http";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
-import { Server } from "socket.io";
 import multer from "multer";
 import { env } from "./env.js";
 import { createContext } from "./context.js";
 import { appRouter } from "./router.js";
 import { logger } from "./logger.js";
 import { scheduleHeartbeat } from "./scheduler.js";
+import { inventoryRoutes } from "./routes/inventory.js";
+import { initRealtimeServer } from "./websocket/server.js";
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: "*"
-  }
-});
+initRealtimeServer(server);
 
 app.use(cors());
 app.use(express.json());
@@ -48,12 +45,10 @@ app.use(
   })
 );
 
+app.use("/api/inventory", inventoryRoutes);
+
 app.get("/health", (_req, res) => {
   res.json({ status: "ok", gpt5Codex: process.env.GPT_5_1_CODEX_ENABLED === "true" });
-});
-
-io.on("connection", (socket) => {
-  logger.info("client connected", { socket: socket.id });
 });
 
 server.listen(env.PORT, () => {

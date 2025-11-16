@@ -1,0 +1,2 @@
+record_id,source_system,target_system,status
+1,SAP ECC,SAP S/4HANA,ready

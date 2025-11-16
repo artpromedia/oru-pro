@@ -51,7 +51,7 @@ export class SAPMigrationService {
       customers: ["KNA1", "KNB1"],
       chartOfAccounts: ["SKA1"]
     };
-    return this.mapToOruSchema(data);
+    return this.mapToOonruSchema(data);
   }
 
   async extractTransactions(months: number = 6): Promise<TransactionPayload> {
@@ -74,7 +74,7 @@ export class SAPMigrationService {
     };
   }
 
-  private mapToOruSchema<T>(data: T): T {
+  private mapToOonruSchema<T>(data: T): T {
     return data;
   }
 

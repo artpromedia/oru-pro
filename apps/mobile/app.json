@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "Oru Mobile",
+    "slug": "oru-mobile",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "oru",
+    "userInterfaceStyle": "automatic",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "ai.ooru.mobile"
+    },
+    "android": {
+      "package": "ai.ooru.mobile",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.VIBRATE"
+      ]
+    },
+    "extra": {
+      "eas": {
+        "projectId": "00000000-0000-0000-0000-000000000000"
+      }
+    }
+  }
+}

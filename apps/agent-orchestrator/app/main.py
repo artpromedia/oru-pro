@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 from pydantic import BaseModel
 
-app = FastAPI(title="Oru Agent Orchestrator")
+app = FastAPI(title="Oonru Agent Orchestrator")
 
 
 class AgentToggle(BaseModel):

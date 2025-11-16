@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ComponentType } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   DollarSign,
@@ -12,7 +12,8 @@ import {
   AlertTriangle,
   CheckCircle,
   Brain,
-  Download
+  Download,
+  type LucideIcon
 } from 'lucide-react';
 import {
   Line,
@@ -353,7 +354,7 @@ export default function FinanceDashboard() {
 }
 
 type FinanceMetricCardProps = {
-  icon: ComponentType<{ className?: string }>;
+  icon: LucideIcon;
   label: string;
   value: number;
   change: number;
@@ -405,7 +406,7 @@ type StatusVariant = 'success' | 'alert' | 'info';
 type StatusPillProps = {
   variant: StatusVariant;
   label: string;
-  Icon: ComponentType<{ className?: string }>;
+  Icon: LucideIcon;
 };
 
 function StatusPill({ variant, label, Icon }: StatusPillProps) {

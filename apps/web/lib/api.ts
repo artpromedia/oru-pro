@@ -1,6 +1,6 @@
 import { DecisionRegistryResponse, ExecutionProjectsResponse } from "./execution-types";
-import type { PharmaValidationResponse } from "./pharma-types";
 import type { ManufacturingShopfloorResponse } from "./manufacturing-types";
+import type { PharmaValidationResponse } from "./pharma-types";
 import type { RetailOperationsResponse } from "./retail-types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -83,3 +83,81 @@ export const fetchManufacturingShopfloor = () =>
 
 export const fetchRetailOperations = () =>
   apiFetch<RetailOperationsResponse>("/api/retail/operations");
+
+export type DocumentRecord = {
+  id: string;
+  tenantId: string;
+  name: string;
+  type: string;
+  size: number;
+  hash: string;
+  storageUrl: string;
+  uploadedBy: string;
+  status: string;
+  category?: string | null;
+  tags?: string[] | null;
+  aiExtracted?: {
+    entities?: string[];
+    summary?: string;
+    sentiment?: string;
+    keyPhrases?: string[];
+  } | null;
+  compliance?: {
+    standards?: string[];
+    violations?: string[];
+    signature?: string;
+    [key: string]: unknown;
+  } | null;
+  version: number;
+  locked?: boolean | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type DocumentFilters = {
+  category?: string;
+  status?: string;
+  search?: string;
+};
+
+export const fetchDocuments = (filters: DocumentFilters = {}) => {
+  const params = new URLSearchParams();
+  if (filters.category) {
+    params.set("category", filters.category);
+  }
+  if (filters.status) {
+    params.set("status", filters.status);
+  }
+  if (filters.search) {
+    params.set("search", filters.search);
+  }
+
+  const query = params.toString();
+  const endpoint = query ? `/api/v1/documents?${query}` : "/api/v1/documents";
+
+  return apiFetch<DocumentRecord[]>(endpoint);
+};
+
+export type DocumentUploadResponse = {
+  document: DocumentRecord;
+  aiAnalysis: Record<string, unknown>;
+  compliance: Record<string, unknown>;
+};
+
+export const uploadDocument = async (file: File) => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch(resolveUrl("/api/v1/documents"), {
+    method: "POST",
+    body: formData,
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || `Upload failed with status ${response.status}`);
+  }
+
+  return response.json() as Promise<DocumentUploadResponse>;
+};

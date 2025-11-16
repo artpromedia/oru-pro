@@ -1,10 +1,20 @@
+import { authManager, type Session } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
 const loginSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(6),
-  rememberMe: z.boolean().optional(),
+  password: z.string().min(8),
+  tenantId: z.string().min(2).optional(),
+});
+
+const serializeSession = (session: Session) => ({
+  userId: session.userId,
+  tenantId: session.tenantId,
+  userType: session.userType,
+  permissions: session.permissions,
+  profile: session.profile,
+  expiresAt: session.expiresAt.toISOString(),
 });
 
 export async function POST(request: Request) {
@@ -18,26 +28,46 @@ export async function POST(request: Request) {
         message: "Invalid credentials payload",
         errors: parsed.error.flatten().fieldErrors,
       },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
-  const { email, rememberMe } = parsed.data;
-  const requiresMfa = !email.endsWith("@oru.ai");
+  const { email, password, tenantId } = parsed.data;
 
-  return NextResponse.json({
-    success: true,
-    token: "mock-session-token",
-    requiresMfa,
-    user: {
-      name: "Operations Lead",
-      email,
-      roles: ["operations", "decision-maker"],
-    },
-    session: {
-      expiresInMinutes: rememberMe ? 1440 : 60,
-      issuedAt: new Date().toISOString(),
-    },
-    message: requiresMfa ? "MFA challenge issued" : "Login successful",
-  });
+  try {
+    const result = await authManager.login(email, password, tenantId);
+    const session = authManager.getSession(result.sessionId);
+
+    if (!session) {
+      throw new Error("Session not found after login");
+    }
+
+    if (!result.requiresMfa && session.mfaVerified) {
+      const issued = authManager.issueToken(result.sessionId);
+      return NextResponse.json({
+        success: true,
+        requiresMfa: false,
+        token: issued.jwt,
+        session: serializeSession(issued.session),
+        message: "Login successful",
+      });
+    }
+
+    return NextResponse.json({
+      success: true,
+      requiresMfa: true,
+      sessionId: result.sessionId,
+      expiresAt: result.expiresAt.toISOString(),
+      message: "MFA challenge issued",
+    });
+  } catch (error) {
+    const message = (error as Error).message || "Authentication failed";
+    return NextResponse.json(
+      {
+        success: false,
+        message,
+      },
+      { status: 401 },
+    );
+  }
 }

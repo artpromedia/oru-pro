@@ -28,7 +28,7 @@ class NoiseFactor:
 
 
 @dataclass(slots=True)
-class OruDecision:
+class OonruDecision:
     id: str
     module: str
     title: str
@@ -237,19 +237,19 @@ class DecisionIntelligenceEngine:
             "budget_allocation": BudgetAllocationTemplate(),
             "hiring_decision": HiringDecisionTemplate(),
         }
-        self.history: List[OruDecision] = []
+        self.history: List[OonruDecision] = []
         self.review_flags: List[Dict[str, Any]] = []
 
     def enforce_decision_hygiene(
         self, raw_decision: Dict[str, Any]
-    ) -> OruDecision:
+    ) -> OonruDecision:
         template = self.select_template(raw_decision)
         missing = template.check_requirements(raw_decision)
         if missing:
             raise DecisionIncompleteError(missing)
         biases = self.detect_biases(raw_decision)
         self.calculate_noise_score(raw_decision, biases)
-        decision = OruDecision(
+        decision = OonruDecision(
             id=self.generate_id(),
             module=raw_decision.get("module", "unknown"),
             title=raw_decision.get("title", "Untitled Decision"),
@@ -261,7 +261,7 @@ class DecisionIntelligenceEngine:
         self.history.append(decision)
         return decision
 
-    def cross_module_consistency(self, decision: OruDecision) -> float:
+    def cross_module_consistency(self, decision: OonruDecision) -> float:
         similar = self.find_similar_decisions(decision)
         consistency = self.calculate_consistency(decision, similar)
         if consistency < 0.7:
@@ -319,14 +319,14 @@ class DecisionIntelligenceEngine:
         return float(np.clip(stakes, 0, 1))
 
     def find_similar_decisions(
-        self, decision: OruDecision
-    ) -> List[OruDecision]:
+        self, decision: OonruDecision
+    ) -> List[OonruDecision]:
         return [
             hist for hist in self.history if hist.module == decision.module
         ]
 
     def calculate_consistency(
-        self, decision: OruDecision, similar: List[OruDecision]
+        self, decision: OonruDecision, similar: List[OonruDecision]
     ) -> float:
         if not similar:
             return 1.0
@@ -335,7 +335,7 @@ class DecisionIntelligenceEngine:
         return float(np.clip(1 - mean_diff, 0, 1))
 
     def flag_for_review(
-        self, decision: OruDecision, similar: List[OruDecision]
+        self, decision: OonruDecision, similar: List[OonruDecision]
     ) -> None:
         self.review_flags.append(
             {
