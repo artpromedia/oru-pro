@@ -5,7 +5,7 @@ import { z } from "zod";
 import { Redis } from "ioredis";
 import { inventoryQueue } from "../jobs/queues.js";
 import { env } from "../env.js";
-import { InventoryAIAgent } from "../lib/ai/agent.js";
+import { aiAgent } from "../lib/ai/index.js";
 import { emitRealtimeEvent } from "../websocket/server.js";
 
 type PlantAggregate = {
@@ -23,13 +23,6 @@ type AggregateAccumulator = {
 
 const router = Router();
 const cache = new Redis(env.REDIS_URL);
-const aiAgent = new InventoryAIAgent({
-  openai: { apiKey: env.OPENAI_API_KEY, model: env.OPENAI_MODEL },
-  anthropic: { apiKey: env.ANTHROPIC_API_KEY, model: env.ANTHROPIC_MODEL },
-  gemini: { apiKey: env.GEMINI_API_KEY, model: env.GEMINI_MODEL },
-  llama: { apiKey: env.GROQ_API_KEY, model: env.LLAMA_MODEL },
-  chromaUrl: env.CHROMA_URL
-});
 
 const mb52QuerySchema = z.object({
   tenantId: z.string(),
