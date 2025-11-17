@@ -14,7 +14,7 @@ import {
   Shield,
   Sparkles,
 } from "lucide-react";
-import { login, type LoginPayload } from "@/lib/api";
+import { login, verifyMfa, type LoginPayload } from "@/lib/api";
 
 const trustSignals = ["Cold Chain", "CPG", "Manufacturing", "Life Sciences"];
 const ssoProviders = ["Azure AD", "Okta", "Google", "SAP ID"];
@@ -29,6 +29,10 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [mfaCode, setMfaCode] = useState("");
+  const [mfaSession, setMfaSession] = useState<{ sessionId: string; expiresAt?: string | null } | null>(
+    null,
+  );
 
   const loginMutation = useMutation({
     mutationFn: (payload: LoginPayload) => login(payload),
@@ -36,10 +40,30 @@ export default function LoginPage() {
       setStatusMessage(null);
     },
     onSuccess: (response) => {
+      if (response.requiresMfa && response.sessionId) {
+        setMfaSession({ sessionId: response.sessionId, expiresAt: response.expiresAt });
+        setStatusMessage("MFA challenge issued. Enter your 6-digit code to continue.");
+        return;
+      }
+      setMfaSession(null);
+      setMfaCode("");
       setStatusMessage(response.message ?? "Authenticated");
     },
     onError: (error: Error) => {
       setStatusMessage(error.message || "Unable to authenticate");
+    },
+  });
+
+  const mfaMutation = useMutation({
+    mutationFn: verifyMfa,
+    onMutate: () => setStatusMessage(null),
+    onSuccess: (response) => {
+      setStatusMessage(response.message ?? "MFA verified. Welcome!");
+      setMfaSession(null);
+      setMfaCode("");
+    },
+    onError: (error: Error) => {
+      setStatusMessage(error.message || "Unable to verify MFA token");
     },
   });
 
@@ -200,10 +224,60 @@ export default function LoginPage() {
             </button>
           </form>
 
+          {mfaSession && (
+            <div className="mt-6 rounded-2xl border border-blue-100 bg-blue-50/80 p-4">
+              <p className="text-sm font-semibold text-slate-900">Multi-factor authentication</p>
+              <p className="mt-1 text-sm text-slate-600">
+                Enter the 6-digit TOTP code from your authenticator app. For local testing you can
+                run
+                <code className="mx-1 rounded bg-white/70 px-2 py-0.5 text-xs text-slate-900">
+                  {`pnpm --filter @oru/web exec node -e "const speakeasy=require('speakeasy'); console.log(speakeasy.totp({ secret: 'JBYUQRS6IFJCGQKXFJHDELTUNVUUWN3U', encoding: 'base32' }));"`}
+                </code>
+                to print the current code.
+              </p>
+              <form
+                className="mt-4 flex flex-col gap-3 sm:flex-row"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  if (!mfaCode.trim()) {
+                    setStatusMessage("Enter the MFA code to continue");
+                    return;
+                  }
+                  mfaMutation.mutate({ sessionId: mfaSession.sessionId, token: mfaCode });
+                }}
+              >
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={8}
+                  value={mfaCode}
+                  onChange={(event) => setMfaCode(event.target.value.replace(/\D/g, ""))}
+                  className="flex-1 rounded-lg border border-blue-200 px-4 py-3 text-lg tracking-[0.3em] focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                  placeholder="••••••"
+                />
+                <button
+                  type="submit"
+                  disabled={mfaMutation.isPending}
+                  className="rounded-lg bg-slate-900 px-4 py-3 font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  {mfaMutation.isPending ? "Verifying…" : "Verify MFA"}
+                </button>
+              </form>
+              {mfaSession.expiresAt && (
+                <p className="mt-2 text-xs text-slate-500">
+                  Challenge expires at {new Date(mfaSession.expiresAt).toLocaleTimeString()}.
+                </p>
+              )}
+            </div>
+          )}
+
           {statusMessage && (
             <div
               className={`mt-4 rounded-xl border px-4 py-3 text-sm ${
-                loginMutation.isError ? "border-red-200 bg-red-50 text-red-700" : "border-green-200 bg-green-50 text-green-700"
+                loginMutation.isError || mfaMutation.isError
+                  ? "border-red-200 bg-red-50 text-red-700"
+                  : "border-green-200 bg-green-50 text-green-700"
               }`}
             >
               {statusMessage}

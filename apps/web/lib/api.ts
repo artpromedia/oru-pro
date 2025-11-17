@@ -61,10 +61,23 @@ export type LoginResponse = {
   };
   message?: string;
   requiresMfa?: boolean;
+  sessionId?: string;
+  expiresAt?: string;
 };
 
 export const login = (payload: LoginPayload) =>
   apiFetch<LoginResponse>("/api/auth/login", {
+    method: "POST",
+    body: payload,
+  });
+
+export type VerifyMfaPayload = {
+  sessionId: string;
+  token: string;
+};
+
+export const verifyMfa = (payload: VerifyMfaPayload) =>
+  apiFetch<LoginResponse>("/api/auth/mfa", {
     method: "POST",
     body: payload,
   });

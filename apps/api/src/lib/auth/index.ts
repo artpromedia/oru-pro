@@ -9,6 +9,17 @@ import { env } from "../../env.js";
 
 const SUPER_ADMIN_EMAIL = "artpromedia@oonru.ai";
 const SUPER_ADMIN_ID = "OONRU-SA-001";
+const DEV_SUPER_ADMIN_PASSWORD_HASH = "$2a$10$9OmXW/byLlTj1ZNF4RJajuHU37D8GAroVE0cXdrPQgQjJfXI0qZvW";
+
+const resolveSuperAdminHash = () => {
+  if (env.SUPER_ADMIN_PASSWORD_HASH) {
+    return env.SUPER_ADMIN_PASSWORD_HASH;
+  }
+  if (env.NODE_ENV !== "production") {
+    return DEV_SUPER_ADMIN_PASSWORD_HASH;
+  }
+  return undefined;
+};
 
 interface RolePermissionRecord {
   resource: string;
@@ -131,10 +142,11 @@ class AuthService {
   }
 
   private async handleSuperAdminLogin(email: string, password: string) {
-    if (!env.SUPER_ADMIN_PASSWORD_HASH) {
+    const passwordHash = resolveSuperAdminHash();
+    if (!passwordHash) {
       throw new Error("Super admin not configured");
     }
-    const validPassword = await bcrypt.compare(password, env.SUPER_ADMIN_PASSWORD_HASH);
+    const validPassword = await bcrypt.compare(password, passwordHash);
     if (!validPassword) {
       throw new Error("Invalid super admin credentials");
     }

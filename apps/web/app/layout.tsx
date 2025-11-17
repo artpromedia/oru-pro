@@ -21,6 +21,9 @@ export const metadata: Metadata = {
     apple: [{ url: "/icons/pwa-maskable.svg", type: "image/svg+xml" }],
     other: [{ rel: "mask-icon", url: "/icons/pwa-maskable.svg" }],
   },
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
 };
 
 export const viewport: Viewport = {

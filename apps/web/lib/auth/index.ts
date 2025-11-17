@@ -34,6 +34,28 @@ type RequestLike = Pick<NextRequest, "headers">;
 
 const SUPER_ADMIN_EMAIL = "artpromedia@oonru.ai";
 const SUPER_ADMIN_ID = "OONRU-SA-001";
+const DEV_SUPER_ADMIN_PASSWORD_HASH = "$2a$10$9OmXW/byLlTj1ZNF4RJajuHU37D8GAroVE0cXdrPQgQjJfXI0qZvW";
+const DEV_SUPER_ADMIN_MFA_SECRET = "JBYUQRS6IFJCGQKXFJHDELTUNVUUWN3U";
+
+const resolveSuperAdminPasswordHash = () => {
+  if (process.env.SUPER_ADMIN_PASSWORD_HASH) {
+    return process.env.SUPER_ADMIN_PASSWORD_HASH;
+  }
+  if (process.env.NODE_ENV !== "production") {
+    return DEV_SUPER_ADMIN_PASSWORD_HASH;
+  }
+  return undefined;
+};
+
+const resolveSuperAdminMfaSecret = () => {
+  if (process.env.SUPER_ADMIN_MFA_SECRET) {
+    return process.env.SUPER_ADMIN_MFA_SECRET;
+  }
+  if (process.env.NODE_ENV !== "production") {
+    return DEV_SUPER_ADMIN_MFA_SECRET;
+  }
+  return undefined;
+};
 
 type TenantClient = PrismaClient & {
   user: {
@@ -122,7 +144,7 @@ class AuthenticationManager {
     }
 
     if (session.userType === "super-admin") {
-      const superSecret = process.env.SUPER_ADMIN_MFA_SECRET;
+      const superSecret = resolveSuperAdminMfaSecret();
       if (!superSecret) {
         throw new Error("Super admin MFA secret missing");
       }
@@ -203,7 +225,7 @@ class AuthenticationManager {
   }
 
   private async authenticateSuperAdmin(email: string, password: string) {
-    const storedHash = process.env.SUPER_ADMIN_PASSWORD_HASH;
+    const storedHash = resolveSuperAdminPasswordHash();
     if (!storedHash) {
       return false;
     }
@@ -282,15 +304,32 @@ class AuthenticationManager {
   }
 
   private async logAuthEvent(session: Session, event: string) {
-    await dbManager.redis.zadd(
-      `auth:${session.tenantId}:${session.userId}`,
-      Date.now(),
-      JSON.stringify({ event, timestamp: new Date().toISOString(), sessionId: session.sessionId }),
-    );
+    try {
+      await dbManager.redis.zadd(
+        `auth:${session.tenantId}:${session.userId}`,
+        Date.now(),
+        JSON.stringify({ event, timestamp: new Date().toISOString(), sessionId: session.sessionId }),
+      );
+    } catch (error) {
+      console.warn(
+        `[auth] Failed to log auth event to Redis: ${(error as Error).message}`,
+        { event, tenantId: session.tenantId, userId: session.userId },
+      );
+    }
   }
 }
+declare global {
+  // eslint-disable-next-line no-var
+  var __authManager: AuthenticationManager | undefined;
+}
 
-export const authManager = new AuthenticationManager();
+const authManagerInstance = globalThis.__authManager ?? new AuthenticationManager();
+
+if (process.env.NODE_ENV !== "production") {
+  globalThis.__authManager = authManagerInstance;
+}
+
+export const authManager = authManagerInstance;
 
 export async function authMiddleware(req: NextRequest) {
   return authManager.validateRequest(req);

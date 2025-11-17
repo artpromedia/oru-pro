@@ -73,6 +73,20 @@ All downstream services gate against `GPT_5_1_CODEX_ENABLED` (see `.env.example`
 - Required secrets: `JWT_SECRET`, `SUPER_ADMIN_PASSWORD_HASH`, and `SUPER_ADMIN_MFA_SECRET`, plus the existing `DATABASE_URL`, `REDIS_URL`, `SUPABASE_URL`, and `SUPABASE_SERVICE_ROLE_KEY` for tenant data and cache fan-out.
 - Successful MFA verification returns signed tokens that front-end clients should persist as the `oru.session` cookie or standard `Authorization: Bearer <token>` header when calling APIs.
 
+### Development login shortcuts
+
+- **Email**: `artpromedia@oonru.ai`
+- **Password**: `SuperOonru!23`
+- **MFA Secret**: `JBYUQRS6IFJCGQKXFJHDELTUNVUUWN3U` (import into Authy/Google Authenticator as a TOTP account)
+
+These values are automatically injected whenever `SUPER_ADMIN_PASSWORD_HASH`/`SUPER_ADMIN_MFA_SECRET` are not set and `NODE_ENV !== "production"`, so you can log in immediately after `pnpm dev`. For production, generate your own secrets:
+
+```powershell
+pnpm --filter @oru/web exec node -p "require('bcryptjs').hashSync('<YourPassword>', 10)"
+```
+
+Paste the resulting hash into both `.env` (API) and `.env.local` (web), then set `SUPER_ADMIN_MFA_SECRET` to a base32 string from your authenticator of choice.
+
 ## Forge marketplace, SAP migration kit, and document control
 
 - `/forge` exposes the Oonru Forge marketplace with curated categories, installed app health, developer SDK downloads, and a live-code builder for partner extensions.

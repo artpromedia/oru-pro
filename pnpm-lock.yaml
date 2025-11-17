@@ -502,6 +502,9 @@ importers:
       '@prisma/client':
         specifier: 5.16.1
         version: 5.16.1(prisma@5.16.1)
+      dotenv:
+        specifier: 16.4.5
+        version: 16.4.5
     devDependencies:
       prisma:
         specifier: 5.16.1
