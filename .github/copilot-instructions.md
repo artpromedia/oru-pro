@@ -89,6 +89,7 @@
   - `/forge` implements the Oonru Forge marketplace, installed extensions view, developer SDK catalog, and live code builder for partner apps.
   - `/migration/sap` implements the SAP migration kit with connection orchestration, module selection, phase tracking, and mapping previews.
   - `/documents` implements the AI document management cockpit with drag/drop uploads, compliance tagging, and inline controls; `/api/v1/documents` plus `apps/web/lib/storage`, `apps/web/lib/ai/document-processor.ts`, and `apps/web/lib/compliance` power secure uploads, AI enrichment, auditing, and search indexing.
+  - `/backend` hosts the consolidated Express + Prisma API with health checks, operations telemetry routes, auth middleware, and Socket.IO broadcasts to support the Phase 4 agent + decision intelligence prompts.
   - `/industries/food-beverage/transactions` implements Prompt 1's end-to-end F&B transaction cockpit with receiving, production, QA release, shelf-life, and recall workflows.
   - `/industries/pharmaceutical/transactions` implements Prompt 2's pharma transaction hub with dispensing, compounding, fill-finish, validation, clinical supply, and cold-chain controls.
   - `/industries/manufacturing/transactions` implements Prompt 3's precision manufacturing transaction cockpit with CNC, additive, QC, assembly, maintenance, and tooling workflows.

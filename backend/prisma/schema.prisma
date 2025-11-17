@@ -1,0 +1,413 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+ datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Organization & User Management
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  plan      String   @default("trial")
+  settings  Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  users         User[]
+  warehouses    Warehouse[]
+  inventories   Inventory[]
+  productions   Production[]
+  procurements  Procurement[]
+  projects      Project[]
+  decisions     Decision[]
+  agents        Agent[]
+}
+
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  password       String
+  name           String
+  role           Role     @relation(fields: [roleId], references: [id])
+  roleId         String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId String
+  settings       Json?
+  lastLogin      DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  decisions      Decision[]
+  tasks          Task[]
+  notifications  Notification[]
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  name        String
+  permissions Json
+  users       User[]
+}
+
+// Inventory Management
+model Inventory {
+  id             String   @id @default(cuid())
+  sku            String
+  name           String
+  description    String?
+  quantity       Int
+  reorderPoint   Int
+  reorderQty     Int
+  unit           String
+  location       String
+  warehouseId    String
+  warehouse      Warehouse @relation(fields: [warehouseId], references: [id])
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  
+  // QA fields
+  qaStatus       String   @default("approved") // approved, qa_hold, rejected
+  qaHoldReason   String?
+  qaTests        Json?
+  
+  // Tracking
+  lastUpdated    DateTime @updatedAt
+  expiryDate     DateTime?
+  batchNumber    String?
+  temperature    Json?    // For cold chain
+  
+  movements      InventoryMovement[]
+  qaHolds        QAHold[]
+  
+  @@unique([sku, warehouseId])
+  @@index([organizationId, warehouseId])
+  @@index([qaStatus])
+}
+
+model InventoryMovement {
+  id          String   @id @default(cuid())
+  inventoryId String
+  inventory   Inventory @relation(fields: [inventoryId], references: [id])
+  type        String   // inbound, outbound, adjustment, transfer
+  quantity    Int
+  fromLocation String?
+  toLocation   String?
+  reference    String?  // PO number, SO number, etc
+  reason       String?
+  performedBy  String
+  timestamp    DateTime @default(now())
+  
+  @@index([inventoryId, timestamp])
+}
+
+model QAHold {
+  id          String   @id @default(cuid())
+  inventoryId String
+  inventory   Inventory @relation(fields: [inventoryId], references: [id])
+  batchNumber String
+  holdDate    DateTime @default(now())
+  tests       Json     // Test results
+  status      String   // pending, approved, rejected
+  decision    String?
+  decidedBy   String?
+  decidedAt   DateTime?
+  aiRecommendation Json?
+  confidence  Float?
+  
+  @@index([status, holdDate])
+}
+
+// Production Management
+model Production {
+  id             String   @id @default(cuid())
+  orderNumber    String   @unique
+  productSku     String
+  quantity       Int
+  status         String   // planned, in_progress, completed, on_hold
+  startDate      DateTime
+  endDate        DateTime?
+  lineId         String
+  line           ProductionLine @relation(fields: [lineId], references: [id])
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  
+  bom            Json
+  actualOutput   Int?
+  qualityScore   Float?
+  efficiency     Float?
+  
+  tasks          ProductionTask[]
+  
+  @@index([status, startDate])
+  @@index([organizationId, lineId])
+}
+
+model ProductionLine {
+  id          String   @id @default(cuid())
+  name        String
+  type        String
+  capacity    Int      // units per hour
+  status      String   // active, maintenance, idle
+  oee         Float?   // Overall Equipment Effectiveness
+  currentJob  String?
+  
+  productions Production[]
+  maintenance MaintenanceRecord[]
+}
+
+model ProductionTask {
+  id           String   @id @default(cuid())
+  productionId String
+  production   Production @relation(fields: [productionId], references: [id])
+  taskName     String
+  sequence     Int
+  status       String   // pending, in_progress, completed
+  startTime    DateTime?
+  endTime      DateTime?
+  operatorId   String?
+  notes        String?
+  
+  @@index([productionId, sequence])
+}
+
+// Procurement Management
+model Procurement {
+  id             String   @id @default(cuid())
+  poNumber       String   @unique
+  supplierId     String
+  supplier       Supplier @relation(fields: [supplierId], references: [id])
+  status         String   // draft, sent, confirmed, received, cancelled
+  orderDate      DateTime @default(now())
+  expectedDate   DateTime
+  items          Json     // Array of line items
+  totalAmount    Float
+  currency       String   @default("USD")
+  terms          String?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  
+  approvals      ProcurementApproval[]
+  receipts       GoodsReceipt[]
+  
+  @@index([status, orderDate])
+  @@index([organizationId, supplierId])
+}
+
+model Supplier {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  category    String
+  rating      Float?
+  leadTime    Int      // days
+  paymentTerms String
+  contact     Json
+  compliance  Json?    // Certifications, audits
+  performance Json?    // Delivery, quality metrics
+  
+  procurements Procurement[]
+}
+
+// Project Management
+model Project {
+  id             String   @id @default(cuid())
+  name           String
+  description    String?
+  status         String   // planning, active, on_hold, completed
+  priority       String   // low, medium, high, critical
+  startDate      DateTime
+  endDate        DateTime
+  budget         Float?
+  actualCost     Float?
+  progress       Float    @default(0)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  
+  // Links to operations
+  linkedOperations Json?  // Array of linked inventory, production, etc IDs
+  
+  tasks          Task[]
+  decisions      Decision[]
+  
+  @@index([status, priority])
+  @@index([organizationId])
+}
+
+model Task {
+  id          String   @id @default(cuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id])
+  title       String
+  description String?
+  status      String   // todo, in_progress, done
+  priority    String
+  assigneeId  String?
+  assignee    User?    @relation(fields: [assigneeId], references: [id])
+  dueDate     DateTime?
+  completedAt DateTime?
+  
+  dependencies Json?   // Array of task IDs
+  
+  @@index([projectId, status])
+  @@index([assigneeId])
+}
+
+// Decision Management
+model Decision {
+  id             String   @id @default(cuid())
+  title          String
+  description    String
+  type           String   // procurement, qa_release, production, strategic
+  status         String   // pending, approved, rejected, deferred
+  priority       String   // low, medium, high, critical
+  requesterId    String
+  requester      User     @relation(fields: [requesterId], references: [id])
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  projectId      String?
+  project        Project? @relation(fields: [projectId], references: [id])
+  
+  // Decision data
+  context        Json
+  alternatives   Json
+  criteria       Json
+  
+  // Noise detection
+  noiseFactors   Json?
+  biasDetected   Boolean @default(false)
+  
+  // AI recommendation
+  aiRecommendation Json?
+  aiConfidence     Float?
+  
+  // Decision outcome
+  choice         String?
+  reasoning      String?
+  decidedBy      String?
+  decidedAt      DateTime?
+  
+  createdAt      DateTime @default(now())
+  deadline       DateTime?
+  
+  @@index([status, priority])
+  @@index([organizationId])
+}
+
+// Agent Management
+model Agent {
+  id             String   @id @default(cuid())
+  name           String
+  type           String   // inventory, qa, production, logistics, decision
+  status         String   // active, idle, error, maintenance
+  mode           String   // autonomous, supervised, training
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  
+  configuration  Json
+  permissions    Json
+  metrics        Json?    // Performance metrics
+  
+  lastAction     String?
+  lastActionTime DateTime?
+  
+  activities     AgentActivity[]
+  
+  @@index([organizationId, type, status])
+}
+
+model AgentActivity {
+  id          String   @id @default(cuid())
+  agentId     String
+  agent       Agent    @relation(fields: [agentId], references: [id])
+  action      String
+  details     Json
+  confidence  Float
+  result      String?
+  timestamp   DateTime @default(now())
+  
+  @@index([agentId, timestamp])
+}
+
+// Additional Models
+model Warehouse {
+  id             String   @id @default(cuid())
+  code           String   @unique
+  name           String
+  type           String   // standard, cold_storage, hazmat
+  address        Json
+  capacity       Json     // Storage capacity details
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  
+  inventories    Inventory[]
+  zones          WarehouseZone[]
+}
+
+model WarehouseZone {
+  id          String   @id @default(cuid())
+  warehouseId String
+  warehouse   Warehouse @relation(fields: [warehouseId], references: [id])
+  code        String
+  type        String   // picking, storage, staging, shipping
+  temperature String?  // For cold chain
+  
+  @@unique([warehouseId, code])
+}
+
+model MaintenanceRecord {
+  id           String   @id @default(cuid())
+  lineId       String
+  line         ProductionLine @relation(fields: [lineId], references: [id])
+  type         String   // preventive, corrective, emergency
+  scheduledDate DateTime
+  completedDate DateTime?
+  duration     Int?     // minutes
+  description  String
+  cost         Float?
+  
+  @@index([lineId, scheduledDate])
+}
+
+model GoodsReceipt {
+  id            String   @id @default(cuid())
+  procurementId String
+  procurement   Procurement @relation(fields: [procurementId], references: [id])
+  receiptNumber String   @unique
+  receivedDate  DateTime @default(now())
+  items         Json     // Received items with quantities
+  qaStatus      String   // pending, passed, failed
+  notes         String?
+  receivedBy    String
+  
+  @@index([procurementId])
+}
+
+model ProcurementApproval {
+  id            String   @id @default(cuid())
+  procurementId String
+  procurement   Procurement @relation(fields: [procurementId], references: [id])
+  level         Int      // Approval level (1, 2, 3)
+  approverId    String
+  status        String   // pending, approved, rejected
+  comments      String?
+  timestamp     DateTime @default(now())
+  
+  @@index([procurementId, level])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  type      String   // alert, info, warning, error
+  title     String
+  message   String
+  data      Json?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  
+  @@index([userId, read])
+}

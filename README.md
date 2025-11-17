@@ -20,6 +20,7 @@ packages/
   agent-sdk/           # Python base class + utilities
 services/
   *-agent/             # Domain copilots (inventory, production, etc.)
+backend/               # Express + Prisma operations API powering health + telemetry routes
 ```
 
 ## Phase 1 dependency highlights
@@ -28,6 +29,26 @@ services/
 - **API**: Express, @trpc/server, Prisma, Bull + BullMQ, ioredis, jsonwebtoken, multer, node-cron, winston.
 - **Migration toolkit**: sap-rfc-client, oracledb, csv-parse, node-etl.
 - **Python agents**: fastapi[all], langchain, openai, pandas, prophet, pulp, celery[redis], motor, pydantic.
+
+## Operations backend (Express + Prisma)
+
+- Location: `backend/` (registered as `@oru/backend` in the pnpm workspace).
+- Express 4 stack with Helmet, CORS, compression, rate limiting, Socket.IO, and Winston logging for realtime-friendly APIs.
+- Middleware: `authMiddleware` reads tenant/user headers, and `errorHandler` + `notFoundHandler` centralize JSON error responses with trace IDs.
+- Routes:
+  - `/livez` and `/health/*` provide liveness/readiness telemetry.
+  - `/api/operations/*` now streams tenant-scoped inventory, production, procurement, decision, and agent telemetry plus a `/events/:channel` Socket.IO broadcaster for Phase 4 copilots.
+  - `/api/decisions/*` exposes the decision registry, batch review, AI noise/bias analysis, and automation endpoints that can spin up procurement POs or production schedules directly from approvals.
+  - `/api/agents/*` introduces Prompt 5's agent management APIs for rosters, KPIs, recent activity, config updates, and runtime command dispatch.
+  - `/api/auth/*` now powers login, MFA verification, bearer session refresh, logout, and tenant-scoped user management (list/create/update/reset) backed by bcrypt, JWT, Speakeasy TOTP, and email stubs.
+- Prisma data model: `backend/prisma/schema.prisma` mirrors the multi-tenant org, inventory, production, procurement, and agent requirements outlined in the prompt; `pnpm --filter @oru/backend prisma generate` keeps the client fresh.
+- Local commands:
+
+```powershell
+pnpm --filter @oru/backend dev       # regenerate Prisma client + start the Express server with ts-node-dev
+pnpm --filter @oru/backend build     # emit dist/ via tsc
+pnpm --filter @oru/backend start     # run the compiled server
+```
 
 ## SAP-grade inventory backend
 
