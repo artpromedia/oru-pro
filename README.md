@@ -40,6 +40,7 @@ backend/               # Express + Prisma operations API powering health + telem
   - `/api/operations/*` now streams tenant-scoped inventory, production, procurement, decision, and agent telemetry plus a `/events/:channel` Socket.IO broadcaster for Phase 4 copilots.
   - `/api/decisions/*` exposes the decision registry, batch review, AI noise/bias analysis, and automation endpoints that can spin up procurement POs or production schedules directly from approvals.
   - `/api/agents/*` introduces Prompt 5's agent management APIs for rosters, KPIs, recent activity, config updates, and runtime command dispatch.
+  - `apps/api/src/services/inventoryService.ts` now powers the low-stock/expiry/QA business logic bridge, emitting Redis + Socket.IO alerts while auto-triggering AI recommendations, PO drafts, and QA approvals through the InventoryAgent.
   - `/api/auth/*` now powers login, MFA verification, bearer session refresh, logout, and tenant-scoped user management (list/create/update/reset) backed by bcrypt, JWT, Speakeasy TOTP, and email stubs.
 - Prisma data model: `backend/prisma/schema.prisma` mirrors the multi-tenant org, inventory, production, procurement, and agent requirements outlined in the prompt; `pnpm --filter @oru/backend prisma generate` keeps the client fresh.
 - Local commands:
@@ -54,6 +55,7 @@ pnpm --filter @oru/backend start     # run the compiled server
 
 - **Prisma data model**: `packages/database/prisma/schema.prisma` now captures tenants, plants, storage locations, materials/batches, material stock ledgers, purchase orders/items, handling units, quality lots, inventory alerts, and forecast snapshots so MB52/MIGO/MD04 workflows have native persistence.
 - **Express routes**: `apps/api/src/routes/inventory.ts` exposes `/api/inventory/mb52`, `/api/inventory/migo`, and `/api/inventory/md04`, complete with Redis caching, BullMQ audit fan-out, and audit-log coverage to mirror SAP t-code semantics.
+- **Scheduler + hooks**: `apps/api/src/scheduler.ts` now runs an hourly cron sweep that calls `inventoryService.runScheduledInventoryCheck` for every org/tenant discovered in the inventory ledger, while the tRPC inventory router immediately re-evaluates SKUs after every receipt, QA approval, transfer, or adjustment so low-stock/expiry/QA alerts propagate to Redis + Socket.IO in seconds.
 - **AI copilot**: `apps/api/src/lib/ai/agent.ts` blends TensorFlow trend fitting, OpenAI narrative summaries, and Chroma embeddings to forecast demand and narrate inventory risk.
 - **LLM fallback**: `apps/api/src/lib/ai/providers.ts` now orchestrates OpenAI → Anthropic → Gemini → Llama (via Groq) so guidance keeps flowing even if the primary foundation model is offline.
 - **Realtime**: `apps/api/src/websocket/server.ts` centralizes Socket.IO broadcasting so inventory/production/quality channels emit updates as soon as MIGO transactions settle.
@@ -81,6 +83,7 @@ Add the following to `.env` for the API layer:
 - **Production Planning Co-Pilot** (`services/production-agent/src/bom_optimizer.py`): performs BOM explosion with availability deltas, capacity balancing, allergen guardrails, and regulatory batch sizing guidance.
 - **Decision Intelligence Engine** (`apps/decision-engine/src/decision_framework.py`): enforces structured decisions with reusable templates, noise/bias detection, and cross-module consistency scoring.
 - **Decision Wizard UI** (`apps/web/app/components/decisions/DecisionWizard.tsx`): App Router component exposing step-by-step guidance, comparison matrices, bias callouts, history, and audit-trail exports for human-in-the-loop approvals.
+- **Decision Noise Agent** (`services/agent-orchestrator/agents/decision_agent.py`): joins the FastAPI orchestrator roster to score signal quality, surface automation bias, and recommend approval/escalation paths for noisy decision queues.
 
 ## GPT-5.1 Codex enablement
 
@@ -153,6 +156,8 @@ Python services rely on uv or pip; each folder contains its own `pyproject.toml`
 - `/profile` now centralizes user settings with universal General/Security/Notification tabs, super-admin Platform controls, tenant Organization management, personalization preferences, and audit-ready activity history.
 - `/pricing` introduces the Business Model Agent marketing surface with transparent seat-based pricing, feature comparison, ROI modeling, FAQ, and CTA blocks wired to the new calculator component.
 - `/super-admin/business-model` provides the monetization command center with ARR metrics, revenue composition, RevEx forecasting toggles, cohort tables, and pricing experiment tracking for operations leadership.
+- `apps/api/src/routers/procurement.router.ts` now writes directly to the Prisma `PurchaseOrder`, `PurchaseOrderItem`, and `AuditLog` tables. Clients must supply `tenantId`, `supplierId`, and a `plantId`/`facilityId` that already exists in the master data plus valid material numbers for every PO line.
+- `apps/api/src/routers/logistics.router.ts` now persists shipments as `HandlingUnit` rows, stores cold-chain telemetry, emits Inventory Alerts on threshold breaches, and saves generated paperwork into the `Document` table. Every call requires a `tenantId` so the data lands in the correct partition.
 - `/pharma/validation` (Prompt 1) provides the GMP validation cockpit with release queue telemetry, cold-chain risk segmentation, and AI QA copilot actions.
 - `/manufacturing/shopfloor` (Prompt 2) unlocks the precision manufacturing console covering OEE breakdowns, cell timelines, and automation recommendations.
 - `/retail/operations` (Prompt 3) adds the omni-channel operations hub with channel mix analytics, fulfillment waves, and promo/loyalty experiments.

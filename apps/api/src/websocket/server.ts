@@ -37,7 +37,7 @@ export const initRealtimeServer = (httpServer: HTTPServer) => {
     }
   });
   gateway = new RealtimeGateway(io);
-  return gateway;
+  return io;
 };
 
 export const emitRealtimeEvent = (channel: RealtimeChannel, payload: unknown) => {

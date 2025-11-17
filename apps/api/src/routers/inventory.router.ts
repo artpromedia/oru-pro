@@ -3,6 +3,8 @@ import { observable } from "@trpc/server/observable";
 import { z } from "zod";
 import type { Prisma } from "@prisma/client";
 import { router, publicProcedure } from "../trpc.js";
+import { inventoryService } from "../services/inventoryService.js";
+import { logger } from "../logger.js";
 
 const stockEvents = new EventEmitter();
 
@@ -62,6 +64,16 @@ const publishStockEvent = (event: StockEvent) => {
   stockEvents.emit("stock", event);
 };
 
+const triggerInventoryIntelligence = (...inventoryIds: Array<string | undefined>) => {
+  inventoryIds
+    .filter((id): id is string => Boolean(id))
+    .forEach((inventoryId) => {
+      inventoryService
+        .evaluateInventoryRecord(inventoryId)
+        .catch((error) => logger.error("inventoryRouter inventory evaluation failed", { inventoryId, error }));
+    });
+};
+
 type PrismaScope = Prisma.TransactionClient;
 
 const ensureInventoryRecord = async (prisma: PrismaScope, facilityId: string, sku: string, uom: string) => {
@@ -101,6 +113,8 @@ export const inventoryRouter = router({
       timestamp: new Date().toISOString()
     });
 
+    triggerInventoryIntelligence(updated.id);
+
     return {
       ...updated,
       qaHoldReason: input.qaHoldReason,
@@ -135,6 +149,8 @@ export const inventoryRouter = router({
       source: "approveQA",
       timestamp: new Date().toISOString()
     });
+
+    triggerInventoryIntelligence(updated.id);
 
     return {
       record: updated,
@@ -189,6 +205,8 @@ export const inventoryRouter = router({
         timestamp
       });
 
+      triggerInventoryIntelligence(updatedSource.id, updatedDestination.id);
+
       return {
         transferId: `${input.fromFacilityId}-${input.toFacilityId}-${timestamp}`,
         updatedSource,
@@ -218,6 +236,8 @@ export const inventoryRouter = router({
       source: "adjustInventory",
       timestamp: new Date().toISOString()
     });
+
+    triggerInventoryIntelligence(updated.id);
 
     return {
       record: updated,

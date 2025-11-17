@@ -67,6 +67,12 @@ model Inventory {
   warehouse      Warehouse @relation(fields: [warehouseId], references: [id])
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
+  facilityId     String?
+  facility       Facility? @relation(fields: [facilityId], references: [id])
+  uom            String   @default("EA")
+  quantityOnHand Float    @default(0)
+  quantityOnHold Float    @default(0)
+  qaState        String   @default("released")
   
   // QA fields
   qaStatus       String   @default("approved") // approved, qa_hold, rejected
@@ -85,6 +91,7 @@ model Inventory {
   @@unique([sku, warehouseId])
   @@index([organizationId, warehouseId])
   @@index([qaStatus])
+  @@index([facilityId])
 }
 
 model InventoryMovement {
@@ -207,8 +214,13 @@ model Supplier {
   contact     Json
   compliance  Json?    // Certifications, audits
   performance Json?    // Delivery, quality metrics
+  tenantId    String?
+  tenant      Tenant?  @relation(fields: [tenantId], references: [id])
   
   procurements Procurement[]
+  purchaseOrders PurchaseOrder[]
+
+  @@index([tenantId])
 }
 
 // Project Management
@@ -346,6 +358,15 @@ model Warehouse {
   zones          WarehouseZone[]
 }
 
+model Facility {
+  id        String     @id @default(cuid())
+  name      String
+  code      String     @unique
+  timezone  String     @default("UTC")
+  address   Json?
+  inventories Inventory[]
+}
+
 model WarehouseZone {
   id          String   @id @default(cuid())
   warehouseId String
@@ -410,4 +431,333 @@ model Notification {
   createdAt DateTime @default(now())
   
   @@index([userId, read])
+}
+
+model Tenant {
+  id               String              @id @default(cuid())
+  code             String              @unique
+  name             String
+  timezone         String              @default("UTC")
+  baseCurrency     String              @default("USD")
+  sapSystem        String?
+  plants           Plant[]
+  materials        Material[]
+  suppliers        Supplier[]
+  alerts           InventoryAlert[]
+  forecasts        ForecastSnapshot[]
+  stocks           MaterialStock[]
+  purchaseOrders   PurchaseOrder[]
+  materialDocuments MaterialDocument[]
+  qualityLots      QualityLot[]
+  handlingUnits    HandlingUnit[]
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+}
+
+model Plant {
+  id                String            @id @default(cuid())
+  tenantId          String
+  tenant            Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  code              String
+  name              String
+  region            String?
+  timezone          String            @default("UTC")
+  storageLocations  StorageLocation[]
+  materialStocks    MaterialStock[]
+  materialBatches   MaterialBatch[]
+  materialDocuments MaterialDocument[]
+  qualityLots       QualityLot[]
+  purchaseOrders    PurchaseOrder[]
+  forecastSnapshots ForecastSnapshot[]
+  alerts            InventoryAlert[]
+  handlingUnits     HandlingUnit[]
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@unique([tenantId, code])
+}
+
+model StorageLocation {
+  id              String   @id @default(cuid())
+  plantId         String
+  plant           Plant    @relation(fields: [plantId], references: [id], onDelete: Cascade)
+  code            String
+  description     String?
+  temperatureBand String?
+  capacity        Decimal?
+  stocks          MaterialStock[]
+  handlingUnits   HandlingUnit[]
+  purchaseItems   PurchaseOrderItem[]
+  materialDocuments MaterialDocument[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([plantId, code])
+}
+
+model Material {
+  id                   String             @id @default(cuid())
+  tenantId             String
+  tenant               Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  materialNumber       String
+  description          String
+  materialGroup        String?
+  baseUnit             String
+  valuationClass       String?
+  mrpType              String?
+  abcIndicator         String?
+  shelfLifeDays        Int?
+  serializationRequired Boolean         @default(false)
+  hazardClass          String?
+  leadTimeDays         Int?
+  netWeight            Decimal?
+  stocks               MaterialStock[]
+  batches              MaterialBatch[]
+  purchaseItems        PurchaseOrderItem[]
+  documents            MaterialDocument[]
+  qualityLots          QualityLot[]
+  forecasts            ForecastSnapshot[]
+  handlingUnits        HandlingUnit[]
+  alerts               InventoryAlert[]
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@unique([tenantId, materialNumber])
+}
+
+model MaterialBatch {
+  id               String   @id @default(cuid())
+  materialId       String
+  material         Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  plantId          String?
+  plant            Plant?   @relation(fields: [plantId], references: [id])
+  batchNumber      String
+  manufacturingDate DateTime?
+  expiryDate       DateTime?
+  status           String   @default("OPEN")
+  characteristics  Json?
+  stocks           MaterialStock[]
+  documents        MaterialDocument[]
+  qualityLots      QualityLot[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([materialId, batchNumber])
+}
+
+model MaterialStock {
+  id                String           @id @default(cuid())
+  tenantId          String
+  tenant            Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  materialId        String
+  material          Material         @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  plantId           String
+  plant             Plant            @relation(fields: [plantId], references: [id], onDelete: Cascade)
+  storageLocationId String?
+  storageLocation   StorageLocation? @relation(fields: [storageLocationId], references: [id])
+  batchId           String?
+  batch             MaterialBatch?   @relation(fields: [batchId], references: [id])
+  uom               String
+  availableQty      Decimal          @default(0)
+  qualityQty        Decimal          @default(0)
+  blockedQty        Decimal          @default(0)
+  safetyStock       Decimal          @default(0)
+  reorderPoint      Decimal          @default(0)
+  status            String           @default("released")
+  agingBucket       String?
+  lastCountAt       DateTime?
+  lastMovementAt    DateTime?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@index([tenantId, plantId, materialId])
+  @@unique([tenantId, plantId, storageLocationId, materialId, batchId])
+}
+
+model PurchaseOrder {
+  id             String         @id @default(cuid())
+  tenantId       String
+  tenant         Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  supplierId     String
+  supplier       Supplier       @relation(fields: [supplierId], references: [id])
+  plantId        String?
+  plant          Plant?         @relation(fields: [plantId], references: [id])
+  documentNumber String         @unique
+  status         String         @default("OPEN")
+  incoterms      String?
+  expectedDate   DateTime?
+  currency       String?
+  items          PurchaseOrderItem[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model PurchaseOrderItem {
+  id               String        @id @default(cuid())
+  purchaseOrderId  String
+  purchaseOrder    PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  lineNumber       Int
+  materialId       String
+  material         Material      @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  orderedQty       Decimal
+  receivedQty      Decimal        @default(0)
+  uom              String
+  netPrice         Decimal?
+  currency         String?
+  deliveryDate     DateTime?
+  status           String         @default("OPEN")
+  storageLocationId String?
+  storageLocation  StorageLocation? @relation(fields: [storageLocationId], references: [id])
+  batchRequirement Boolean        @default(false)
+  confirmedDate    DateTime?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@unique([purchaseOrderId, lineNumber])
+}
+
+model MaterialDocument {
+  id               String           @id @default(cuid())
+  tenantId         String
+  tenant           Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  documentNumber   String           @unique
+  movementType     String
+  materialId       String
+  material         Material         @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  batchId          String?
+  batch            MaterialBatch?   @relation(fields: [batchId], references: [id])
+  plantId          String
+  plant            Plant            @relation(fields: [plantId], references: [id], onDelete: Cascade)
+  storageLocationId String?
+  storageLocation  StorageLocation? @relation(fields: [storageLocationId], references: [id])
+  quantity         Decimal
+  uom              String
+  reference        String?
+  reasonCode       String?
+  source           String?
+  postedBy         String?
+  postedAt         DateTime @default(now())
+  metadata         Json?
+}
+
+model QualityLot {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  plantId     String
+  plant       Plant    @relation(fields: [plantId], references: [id], onDelete: Cascade)
+  materialId  String
+  material    Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  batchId     String?
+  batch       MaterialBatch? @relation(fields: [batchId], references: [id])
+  inspectionType String?
+  status      String   @default("PENDING")
+  holdReason  String?
+  releasedQty Decimal  @default(0)
+  rejectedQty Decimal  @default(0)
+  inspector   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId, status])
+}
+
+model HandlingUnit {
+  id               String           @id @default(cuid())
+  tenantId         String
+  tenant           Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  huNumber         String
+  plantId          String?
+  plant            Plant?           @relation(fields: [plantId], references: [id])
+  storageLocationId String?
+  storageLocation  StorageLocation? @relation(fields: [storageLocationId], references: [id])
+  materialId       String?
+  material         Material?        @relation(fields: [materialId], references: [id])
+  quantity         Decimal?
+  uom              String?
+  weightKg         Decimal?
+  status           String           @default("IDLE")
+  metadata         Json?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@unique([tenantId, huNumber])
+}
+
+model ForecastSnapshot {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  materialId  String
+  material    Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  plantId     String?
+  plant       Plant?   @relation(fields: [plantId], references: [id])
+  horizon     String
+  method      String
+  payload     Json
+  generatedAt DateTime @default(now())
+}
+
+model InventoryAlert {
+  id            String   @id @default(cuid())
+  tenantId      String
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  materialId    String?
+  material      Material? @relation(fields: [materialId], references: [id])
+  plantId       String?
+  plant         Plant?   @relation(fields: [plantId], references: [id])
+  alertType     String
+  severity      String   @default("medium")
+  message       String
+  source        String?
+  acknowledged  Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  resolvedAt    DateTime?
+
+  @@index([tenantId, alertType])
+}
+
+model Document {
+  id          String   @id @default(cuid())
+  tenantId    String
+  name        String
+  type        String
+  size        Int
+  hash        String
+  storageUrl  String
+  uploadedBy  String
+  status      String   @default("processing")
+  category    String?
+  tags        String[]
+  aiExtracted Json?
+  compliance  Json?
+  version     Int      @default(1)
+  locked      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([tenantId, hash])
+  @@index([tenantId, status])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  tenantId  String
+  userId    String
+  action    String
+  entity    String
+  entityId  String
+  details   Json
+  createdAt DateTime @default(now())
+
+  @@index([tenantId, action])
+}
+
+model AgentHeartbeat {
+  id         String   @id @default(cuid())
+  agentName  String
+  queueName  String
+  status     String
+  payload    Json
+  createdAt  DateTime @default(now())
 }
