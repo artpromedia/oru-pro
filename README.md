@@ -38,6 +38,7 @@ backend/               # Express + Prisma operations API powering health + telem
 - Routes:
   - `/livez` and `/health/*` provide liveness/readiness telemetry.
   - `/api/operations/*` now streams tenant-scoped inventory, production, procurement, decision, and agent telemetry plus a `/events/:channel` Socket.IO broadcaster for Phase 4 copilots.
+  - `/api/monitoring/*` exposes the Prompt 6 real-time monitoring dashboard API with StatsD-backed system gauges, tenant-scoped business/agent metrics, live Bull/BullMQ queue telemetry, cached alert feeds, and Socket.IO broadcasts for every org room (`org:<tenantId>`).
   - `/api/decisions/*` exposes the decision registry, batch review, AI noise/bias analysis, and automation endpoints that can spin up procurement POs or production schedules directly from approvals.
   - `/api/agents/*` introduces Prompt 5's agent management APIs for rosters, KPIs, recent activity, config updates, and runtime command dispatch.
   - `apps/api/src/services/inventoryService.ts` now powers the low-stock/expiry/QA business logic bridge, emitting Redis + Socket.IO alerts while auto-triggering AI recommendations, PO drafts, and QA approvals through the InventoryAgent.
@@ -130,6 +131,21 @@ Bring up infra dependencies:
 
 ```powershell
 make db-up
+```
+
+### Local Docker stack (Prompt 7)
+
+1. Copy `.env.development` to `.env` or source it in your shell to expose service URLs/secrets.
+2. Start the supporting databases, queues, and observability tooling:
+
+```powershell
+docker compose -f docker-compose.dev.yml up -d
+```
+
+This launches Postgres, Redis, RabbitMQ, Qdrant, StatsD, Grafana, MinIO, Mailhog, and Adminer on the `oru-network`. Grafana is pre-provisioned to read from Postgres/Redis, StatsD uses `config/statsd.js`, and Postgres runs the bootstrap SQL in `scripts/init.sql` on first start. Shut everything down with:
+
+```powershell
+docker compose -f docker-compose.dev.yml down -v
 ```
 
 ## Testing + quality gates

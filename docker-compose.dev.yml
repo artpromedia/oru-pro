@@ -1,0 +1,127 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: oru-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: oru_dev
+      POSTGRES_USER: oru_user
+      POSTGRES_PASSWORD: oru_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U oru_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: oru-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass oru_redis_dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: oru-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: oru_user
+      RABBITMQ_DEFAULT_PASS: oru_dev_password
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: oru-qdrant
+    restart: unless-stopped
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  statsd:
+    image: statsd/statsd
+    container_name: oru-statsd
+    restart: unless-stopped
+    ports:
+      - "8125:8125/udp"
+      - "8126:8126"
+    volumes:
+      - ./config/statsd.js:/usr/src/app/config.js:ro
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: oru-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    ports:
+      - "3003:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources
+    depends_on:
+      - postgres
+
+  minio:
+    image: minio/minio
+    container_name: oru-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: oru_minio_user
+      MINIO_ROOT_PASSWORD: oru_minio_password
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: oru-mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+  adminer:
+    image: adminer
+    container_name: oru-adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
+  redis_data:
+  rabbitmq_data:
+  qdrant_data:
+  grafana_data:
+  minio_data:
+
+networks:
+  default:
+    name: oru-network

@@ -16,16 +16,19 @@ import { initializeRecurringJobs } from "./lib/queue.js";
 import { requestLogger } from "./middleware/logging.js";
 import { errorHandler } from "./middleware/error.js";
 import { inventoryRoutes } from "./routes/inventory.js";
+import { monitoringRoutes } from "./routes/monitoring.js";
 import { healthCheck } from "./lib/monitoring.js";
 import { redis } from "./lib/redis.js";
 import { initRealtimeServer } from "./websocket/server.js";
 import { initializeAgentOrchestrator, type AgentOrchestratorHandle } from "./services/agentOrchestrator.js";
 import { inventoryService } from "./services/inventoryService.js";
+import { monitoringService } from "./services/monitoringService.js";
 
 const app = express();
 const httpServer = createServer(app);
 const io = initRealtimeServer(httpServer);
 inventoryService.setRealtimeServer(io);
+monitoringService.setRealtimeServer(io);
 let orchestratorHandle: AgentOrchestratorHandle | null = null;
 
 const parseOrigins = () => {
@@ -86,6 +89,7 @@ app.use(
 );
 
 app.use("/api/inventory", inventoryRoutes);
+app.use("/api/monitoring", monitoringRoutes);
 
 const placeholderRoutes = (label: string) => {
   const router = Router();
@@ -167,6 +171,7 @@ const shutdown = async (signal: NodeJS.Signals) => {
   httpServer.close(() => logger.info("http server closed"));
   await prisma.$disconnect();
   await redis.quit();
+  await monitoringService.destroy();
   process.exit(0);
 };
 
