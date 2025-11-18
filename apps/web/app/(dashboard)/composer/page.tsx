@@ -2,8 +2,9 @@
 
 import { useMemo, useRef, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
-import { DndProvider, useDrag, useDrop } from "react-dnd";
-import { HTML5Backend } from "react-dnd-html5-backend";
+import { DndProvider, useDrag, useDrop } from "react-dnd/dist/index.js";
+import type { DragSourceMonitor, DropTargetMonitor } from "react-dnd/dist/types/index.js";
+import { HTML5Backend } from "react-dnd-html5-backend/dist/index.js";
 import {
   Play,
   Pause,
@@ -308,7 +309,7 @@ function DraggableComponent({ component }: { component: LibraryComponent }) {
   const [{ isDragging }, drag] = useDrag<DragItem, void, { isDragging: boolean }>(() => ({
     type: "component",
     item: component,
-    collect: (monitor) => ({
+    collect: (monitor: DragSourceMonitor<DragItem, void>) => ({
       isDragging: monitor.isDragging(),
     }),
   }));
@@ -354,7 +355,7 @@ function WorkflowCanvas({
 
   const [{ isOver }, drop] = useDrop<DragItem, void, { isOver: boolean }>(() => ({
     accept: "component",
-    drop: (item, monitor) => {
+    drop: (item: DragItem, monitor: DropTargetMonitor<DragItem, void>) => {
       const offset = monitor.getClientOffset();
       const rect = canvasRef.current?.getBoundingClientRect();
       if (!offset || !rect) return;
@@ -379,7 +380,7 @@ function WorkflowCanvas({
         ],
       }));
     },
-    collect: (monitor) => ({
+    collect: (monitor: DropTargetMonitor<DragItem, void>) => ({
       isOver: monitor.isOver(),
     }),
   }));

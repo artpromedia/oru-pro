@@ -1,3 +1,5 @@
+import process from "node:process";
+
 import withPWAInit from "next-pwa";
 import runtimeCaching from "next-pwa/cache.js";
 
@@ -12,7 +14,7 @@ const withPWA = withPWAInit({
   runtimeCaching: [
     ...runtimeCaching,
     {
-      urlPattern: ({ url }) => url.origin === self.location.origin && url.pathname.startsWith("/api/"),
+      urlPattern: ({ url }) => url.pathname.startsWith("/api/"),
       handler: "NetworkFirst",
       method: "GET",
       options: {

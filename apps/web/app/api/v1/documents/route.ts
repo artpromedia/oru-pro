@@ -37,8 +37,8 @@ export async function POST(req: NextRequest) {
     }
 
     const documentId = `DOC-${tenantId}-${Date.now()}`;
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const hash = crypto.createHash("sha256").update(buffer).digest("hex");
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const hash = crypto.createHash("sha256").update(Uint8Array.from(buffer)).digest("hex");
 
     const db = await dbManager.getTenantConnection(tenantId);
     const existing = await db.document.findFirst({ where: { hash } });

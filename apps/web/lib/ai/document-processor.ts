@@ -35,7 +35,10 @@ type IndexInput = {
 
 class AIDocumentProcessor {
   async analyze(input: AnalyzeInput): Promise<AnalyzeResult> {
-    const buffer = Buffer.isBuffer(input.content) ? input.content : Buffer.from(input.content);
+    const sourceView = Buffer.isBuffer(input.content)
+      ? Uint8Array.from(input.content)
+      : new Uint8Array(input.content as ArrayBuffer);
+    const buffer = Buffer.from(sourceView);
     const extractedText = this.extractText(buffer, input.contentType);
     const category = this.detectCategory(input.fileName, extractedText);
     const tags = this.buildTags(input.fileName, category);
@@ -48,7 +51,7 @@ class AIDocumentProcessor {
       summary: this.buildSummary(input.fileName, category, extractedText),
       extractedText,
       metadata: {
-        checksum: crypto.createHash("md5").update(buffer).digest("hex"),
+  checksum: crypto.createHash("md5").update(Uint8Array.from(buffer)).digest("hex"),
         byteLength: buffer.byteLength,
         contentType: input.contentType,
       },

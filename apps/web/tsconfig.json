@@ -16,7 +16,7 @@
       "dom.iterable",
       "esnext"
     ],
-    "allowJs": true,
+  "allowJs": true,
     "noEmit": true,
     "incremental": true,
     "jsx": "preserve",

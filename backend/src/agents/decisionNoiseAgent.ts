@@ -1,4 +1,4 @@
-import type { Decision } from '@prisma/client';
+import type { Decision } from '../lib/prisma';
 
 import { logger } from '../utils/logger';
 

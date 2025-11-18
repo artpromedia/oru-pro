@@ -17,3 +17,5 @@ __pycache__
 .DS_Store
 uploads/
 .turbo/
+backend/generated/
+*.tsbuildinfo

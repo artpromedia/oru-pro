@@ -1,7 +1,7 @@
 import { Router, type Request, type Response } from 'express';
 import { body, param, validationResult } from 'express-validator';
 import bcrypt from 'bcryptjs';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../lib/prisma';
 
 import { authService, serializeSession } from '../services/authService';
 import { asyncHandler } from '../utils/asyncHandler';

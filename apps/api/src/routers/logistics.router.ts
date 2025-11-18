@@ -148,8 +148,8 @@ export const logisticsRouter = router({
   generateDocuments: publicProcedure.input(documentRequestInput).mutation(async ({ input, ctx }) => {
     const docs = await ctx.prisma.$transaction(
       input.documents.map((doc) => {
-        const content = Buffer.from(`Doc ${doc} for ${input.shipmentId}`);
-        const hash = createHash("sha256").update(content).digest("hex");
+  const content = Buffer.from(`Doc ${doc} for ${input.shipmentId}`);
+  const hash = createHash("sha256").update(Uint8Array.from(content)).digest("hex");
         return ctx.prisma.document.create({
           data: {
             id: randomUUID(),

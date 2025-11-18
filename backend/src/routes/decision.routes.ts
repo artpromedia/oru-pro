@@ -1,8 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { body, param, query, validationResult } from 'express-validator';
-import { Prisma, type Decision, type User } from '@prisma/client';
-
-import { prisma } from '../lib/prisma';
+import { prisma, Prisma, type Decision, type User } from '../lib/prisma';
 import { DecisionNoiseAgent } from '../agents/decisionNoiseAgent';
 import { publishEvent } from '../services/eventBus';
 import { logger } from '../utils/logger';

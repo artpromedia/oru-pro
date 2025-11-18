@@ -5,19 +5,18 @@ import { inventoryService } from "./services/inventoryService.js";
 
 let inventorySweepRunning = false;
 
-const getOrganizationIdsForSweep = async (): Promise<string[]> => {
-  const organizations = await prisma.inventory.findMany({
-    select: { organizationId: true },
-    distinct: ["organizationId"],
-    where: { organizationId: { not: null } }
+const getFacilityIdsForSweep = async (): Promise<string[]> => {
+  const facilities = await prisma.inventory.findMany({
+    select: { facilityId: true },
+    distinct: ["facilityId"]
   });
 
-  const ids = organizations
-    .map((org) => org.organizationId)
+  const ids = facilities
+    .map((facility) => facility.facilityId)
     .filter((id): id is string => Boolean(id));
 
   if (!ids.length) {
-    logger.warn("cron: no organizations found for inventory sweep");
+    logger.warn("cron: no facilities found for inventory sweep");
   }
 
   return ids;
@@ -31,12 +30,12 @@ const runInventorySweep = async () => {
 
   inventorySweepRunning = true;
   try {
-    const organizationIds = await getOrganizationIdsForSweep();
-    for (const organizationId of organizationIds) {
-      await inventoryService.runScheduledInventoryCheck(organizationId);
+    const facilityIds = await getFacilityIdsForSweep();
+    for (const facilityId of facilityIds) {
+      await inventoryService.runScheduledInventoryCheck(facilityId);
     }
-    if (!organizationIds.length) {
-      logger.debug("cron: inventory sweep skipped because no organizations were available");
+    if (!facilityIds.length) {
+      logger.debug("cron: inventory sweep skipped because no facilities were available");
     }
   } catch (error) {
     logger.error("cron: inventory sweep failed", error);

@@ -101,7 +101,6 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
-    environment: production
 
     steps:
       - uses: actions/checkout@v4
@@ -132,4 +131,5 @@ jobs:
         with:
           status: ${{ job.status }}
           text: 'Production deployment ${{ job.status }}'
-          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}

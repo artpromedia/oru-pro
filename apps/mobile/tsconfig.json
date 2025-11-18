@@ -4,6 +4,7 @@
     "jsx": "react-jsx",
     "types": ["react", "react-native"],
     "baseUrl": "./src",
+  "ignoreDeprecations": "6.0",
     "paths": {
       "@/components/*": ["components/*"],
       "@/hooks/*": ["hooks/*"],

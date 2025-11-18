@@ -86,6 +86,7 @@ export async function middleware(request: NextRequest) {
 
     return NextResponse.next({ request: { headers: requestHeaders } });
   } catch (error) {
+    console.error("Auth middleware token verification failed", error);
     return NextResponse.redirect(new URL(`/auth/login?next=${encodeURIComponent(pathname)}&reason=expired`, request.url));
   }
 }

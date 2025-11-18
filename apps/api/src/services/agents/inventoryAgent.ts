@@ -5,7 +5,7 @@ export type InventorySignal = {
   reorderPoint?: number | null;
   reorderQty?: number | null;
   unitCost?: number | null;
-  organizationId: string;
+  organizationId?: string | null;
   warehouseId?: string | null;
   facilityId?: string | null;
   preferredSupplierId?: string | null;
@@ -35,7 +35,7 @@ export type QAAnalysisResult = {
   recommendation: "approve" | "reject" | "hold";
   confidence: number;
   reasoning: string;
-  highlightedFindings: Array<{ test: string; status: "pass" | "fail"; impact: string; }>;
+  highlightedFindings: Array<{ test: string; status: "pass" | "fail"; impact: string }>;
 };
 
 export type DailyRecommendation = {
@@ -153,15 +153,20 @@ export class InventoryAgent {
       return ratio > 0.9 && ratio < 1;
     });
 
-    const highlightedFindings = parsedTests.map((test) => ({
-      test: test.name ?? "Unnamed Test",
-      status: (test.result ?? "pass").toLowerCase() === "fail" ? "fail" : "pass",
-      impact: failures.includes(test)
+    const highlightedFindings: QAAnalysisResult["highlightedFindings"] = parsedTests.map((test) => {
+      const status: "pass" | "fail" = (test.result ?? "pass").toLowerCase() === "fail" ? "fail" : "pass";
+      const impact = failures.includes(test)
         ? "Critical deviation detected"
         : borderline.includes(test)
           ? "Metric trending toward limit"
-          : "Within control limits"
-    }));
+          : "Within control limits";
+
+      return {
+        test: test.name ?? "Unnamed Test",
+        status,
+        impact
+      };
+    });
 
     if (failures.length === 0 && borderline.length <= 1) {
       return {

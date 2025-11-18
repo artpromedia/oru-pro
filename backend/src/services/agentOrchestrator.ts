@@ -1,4 +1,4 @@
-import { Prisma, type Agent } from '@prisma/client';
+import { Prisma, type Agent } from '../lib/prisma';
 
 import { prisma } from '../lib/prisma';
 import { publishEvent } from './eventBus';
