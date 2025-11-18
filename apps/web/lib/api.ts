@@ -1,4 +1,5 @@
 import { DecisionRegistryResponse, ExecutionProjectsResponse } from "./execution-types";
+import type { GeneralLedgerResponse } from "./finance-types";
 import type { ManufacturingShopfloorResponse } from "./manufacturing-types";
 import type { PharmaValidationResponse } from "./pharma-types";
 import type { RetailOperationsResponse } from "./retail-types";
@@ -25,7 +26,7 @@ const resolveUrl = (path: string) => {
   return path;
 };
 
-async function apiFetch<T>(path: string, options: ApiOptions = {}): Promise<T> {
+export async function apiFetch<T>(path: string, options: ApiOptions = {}): Promise<T> {
   const { body, headers, ...rest } = options;
   const response = await fetch(resolveUrl(path), {
     ...rest,
@@ -96,6 +97,11 @@ export const fetchManufacturingShopfloor = () =>
 
 export const fetchRetailOperations = () =>
   apiFetch<RetailOperationsResponse>("/api/retail/operations");
+
+export const fetchGeneralLedgerSnapshot = (companyCode?: string) =>
+  apiFetch<GeneralLedgerResponse>(
+    `/api/finance/general-ledger${companyCode ? `?companyCode=${encodeURIComponent(companyCode)}` : ""}`,
+  );
 
 export type DocumentRecord = {
   id: string;

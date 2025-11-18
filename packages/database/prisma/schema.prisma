@@ -46,6 +46,183 @@ model AgentHeartbeat {
   createdAt  DateTime @default(now())
 }
 
+model Organization {
+  id        String   @id @default(cuid())
+  code      String?  @unique
+  name      String
+  status    String   @default("active")
+  settings  Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users        User[]
+  roles        Role[]
+  channels     Channel[]
+  notifications Notification[]
+}
+
+model Role {
+  id              String         @id @default(cuid())
+  organization    Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId  String
+  name            String
+  description     String?
+  permissions     String[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  users           User[]
+
+  @@unique([organizationId, name])
+}
+
+model User {
+  id              String         @id @default(cuid())
+  organization    Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId  String
+  email           String         @unique
+  passwordHash    String?
+  name            String
+  avatarUrl       String?
+  title           String?
+  status          String         @default("active")
+  settings        Json?
+  role            Role?          @relation(fields: [roleId], references: [id])
+  roleId          String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  messages        Message[]
+  reactions       MessageReaction[]
+  memberships     ChannelMember[]
+  notifications   Notification[]
+  initiatedCalls  Call[]         @relation("CallInitiator")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  type      String
+  title     String
+  message   String
+  data      Json?
+  status    String   @default("unread")
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId, status])
+  @@index([organizationId])
+}
+
+model Channel {
+  id              String         @id @default(cuid())
+  organization    Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId  String
+  name            String
+  slug            String
+  type            String         @default("channel")
+  description     String?
+  isPrivate       Boolean        @default(false)
+  topic           String?
+  createdBy       String
+  lastMessageId   String?
+  lastActivity    DateTime?
+  archived        Boolean        @default(false)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  members         ChannelMember[]
+  messages        Message[]
+  calls           Call[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId, type, archived])
+}
+
+model ChannelMember {
+  id          String   @id @default(cuid())
+  channel     Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  channelId   String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  role        String   @default("member")
+  isMuted     Boolean  @default(false)
+  lastReadAt  DateTime?
+  unreadCount Int      @default(0)
+  joinedAt    DateTime @default(now())
+
+  @@unique([channelId, userId])
+  @@index([userId])
+}
+
+model Message {
+  id          String    @id @default(cuid())
+  channel     Channel   @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  channelId   String
+  user        User      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId      String
+  content     String
+  metadata    Json?
+  isPinned    Boolean   @default(false)
+  isRead      Boolean   @default(false)
+  deleted     Boolean   @default(false)
+  deletedAt   DateTime?
+  deletedBy   String?
+  edited      Boolean   @default(false)
+  editedAt    DateTime?
+  replyTo     Message?  @relation("MessageReplies", fields: [replyToId], references: [id])
+  replyToId   String?
+  replies     Message[] @relation("MessageReplies")
+  attachments MessageAttachment[]
+  reactions   MessageReaction[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([channelId, createdAt])
+  @@index([replyToId])
+}
+
+model MessageAttachment {
+  id         String   @id @default(cuid())
+  message    Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  messageId  String
+  name       String?
+  type       String?
+  size       Int?
+  url        String
+  metadata   Json?
+  uploadedBy String?
+  createdAt  DateTime @default(now())
+}
+
+model MessageReaction {
+  id        String   @id @default(cuid())
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  messageId String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+
+  @@unique([messageId, userId, emoji])
+  @@index([messageId])
+}
+
+model Call {
+  id           String   @id @default(cuid())
+  channel      Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  channelId    String
+  initiator    User?    @relation("CallInitiator", fields: [initiatorId], references: [id])
+  initiatorId  String?
+  type         String
+  status       String   @default("ringing")
+  startedAt    DateTime @default(now())
+  endedAt      DateTime?
+  metadata     Json?
+}
+
 // Automotive Manufacturing Extensions
 model VehicleModel {
   id               String @id

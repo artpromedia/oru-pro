@@ -17,6 +17,7 @@ import { requestLogger } from "./middleware/logging.js";
 import { errorHandler } from "./middleware/error.js";
 import { inventoryRoutes } from "./routes/inventory.js";
 import { monitoringRoutes } from "./routes/monitoring.js";
+import { commsRoutes } from "./routes/comms.js";
 import { healthCheck } from "./lib/monitoring.js";
 import { redis } from "./lib/redis.js";
 import { initRealtimeServer } from "./websocket/server.js";
@@ -90,6 +91,7 @@ app.use(
 
 app.use("/api/inventory", inventoryRoutes);
 app.use("/api/monitoring", monitoringRoutes);
+app.use("/api/comms", commsRoutes);
 
 const placeholderRoutes = (label: string) => {
   const router = Router();

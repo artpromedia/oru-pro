@@ -4,6 +4,7 @@ const { PrismaClient, Prisma } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 async function main() {
+  await seedCommunications();
   await prisma.vehicleModel.upsert({
     where: { id: "vehicle-model-rivian-r1" },
     update: {},
@@ -217,6 +218,191 @@ async function main() {
       customerSatisfaction: null,
       deliveryCost: new Prisma.Decimal("18.60"),
       alternativeDelivery: "Locker"
+    }
+  });
+}
+
+async function seedCommunications() {
+  const organization = await prisma.organization.upsert({
+    where: { id: "org-demo" },
+    update: {},
+    create: {
+      id: "org-demo",
+      code: "DEMO",
+      name: "Oonru Demo Foods",
+      status: "active",
+      settings: {
+        modules: ["inventory", "production", "comms"],
+        timezone: "America/Chicago"
+      }
+    }
+  });
+
+  const operationsRole = await prisma.role.upsert({
+    where: { id: "role-ops" },
+    update: {},
+    create: {
+      id: "role-ops",
+      organizationId: organization.id,
+      name: "Operations Lead",
+      permissions: ["inventory.view", "production.view", "comms.manage"]
+    }
+  });
+
+  const supervisorRole = await prisma.role.upsert({
+    where: { id: "role-supervisor" },
+    update: {},
+    create: {
+      id: "role-supervisor",
+      organizationId: organization.id,
+      name: "Shift Supervisor",
+      permissions: ["inventory.view", "comms.send"]
+    }
+  });
+
+  const alex = await prisma.user.upsert({
+    where: { id: "user-alex" },
+    update: {},
+    create: {
+      id: "user-alex",
+      organizationId: organization.id,
+      email: "alex.rivera@oru.ai",
+      passwordHash: "$2a$10$9OmXW/byLlTj1ZNF4RJajuHU37D8GAroVE0cXdrPQgQjJfXI0qZvW",
+      name: "Alex Rivera",
+      title: "Operations Lead",
+      avatarUrl: "/avatars/alex.png",
+      roleId: operationsRole.id
+    }
+  });
+
+  const sam = await prisma.user.upsert({
+    where: { id: "user-sam" },
+    update: {},
+    create: {
+      id: "user-sam",
+      organizationId: organization.id,
+      email: "samantha.lee@oru.ai",
+      passwordHash: "$2a$10$9OmXW/byLlTj1ZNF4RJajuHU37D8GAroVE0cXdrPQgQjJfXI0qZvW",
+      name: "Samantha Lee",
+      title: "Production Supervisor",
+      avatarUrl: "/avatars/sam.png",
+      roleId: supervisorRole.id
+    }
+  });
+
+  const jordan = await prisma.user.upsert({
+    where: { id: "user-jordan" },
+    update: {},
+    create: {
+      id: "user-jordan",
+      organizationId: organization.id,
+      email: "jordan.nguyen@oru.ai",
+      passwordHash: "$2a$10$9OmXW/byLlTj1ZNF4RJajuHU37D8GAroVE0cXdrPQgQjJfXI0qZvW",
+      name: "Jordan Nguyen",
+      title: "Procurement Analyst",
+      avatarUrl: "/avatars/jordan.png",
+      roleId: supervisorRole.id
+    }
+  });
+
+  const generalChannel = await prisma.channel.upsert({
+    where: { id: "chn-general" },
+    update: {},
+    create: {
+      id: "chn-general",
+      organizationId: organization.id,
+      name: "Operations War Room",
+      slug: "ops-war-room",
+      type: "channel",
+      description: "Live coordination between ops, production, and procurement",
+      createdBy: alex.id,
+      topic: "Shift 3 cold-chain stabilization"
+    }
+  });
+
+  const qaChannel = await prisma.channel.upsert({
+    where: { id: "chn-qa" },
+    update: {},
+    create: {
+      id: "chn-qa",
+      organizationId: organization.id,
+      name: "QA Escalations",
+      slug: "qa-escalations",
+      type: "channel",
+      description: "Quality holds and release blockers",
+      createdBy: sam.id
+    }
+  });
+
+  const members = [
+    { channelId: generalChannel.id, userId: alex.id },
+    { channelId: generalChannel.id, userId: sam.id },
+    { channelId: generalChannel.id, userId: jordan.id },
+    { channelId: qaChannel.id, userId: sam.id },
+    { channelId: qaChannel.id, userId: alex.id }
+  ];
+
+  for (const member of members) {
+    await prisma.channelMember.upsert({
+      where: {
+        channelId_userId: {
+          channelId: member.channelId,
+          userId: member.userId
+        }
+      },
+      update: {},
+      create: {
+        channelId: member.channelId,
+        userId: member.userId,
+        role: member.userId === alex.id ? "owner" : "member"
+      }
+    });
+  }
+
+  const message1 = await prisma.message.upsert({
+    where: { id: "msg-ops-1" },
+    update: {},
+    create: {
+      id: "msg-ops-1",
+      channelId: generalChannel.id,
+      userId: alex.id,
+      content: "Cold storage #2 spiked to 6°C. Switching to backup compressor and paging maintenance.",
+      metadata: {
+        alert: true,
+        severity: "high"
+      }
+    }
+  });
+
+  await prisma.message.upsert({
+    where: { id: "msg-ops-2" },
+    update: {},
+    create: {
+      id: "msg-ops-2",
+      channelId: generalChannel.id,
+      userId: sam.id,
+      replyToId: message1.id,
+      content: "Maintenance ETA 12 minutes. InventoryAgent already throttled outbound orders." ,
+      metadata: {
+        ai: "InventoryAgent",
+        action: "throttle_orders"
+      }
+    }
+  });
+
+  await prisma.message.upsert({
+    where: { id: "msg-qa-1" },
+    update: {},
+    create: {
+      id: "msg-qa-1",
+      channelId: qaChannel.id,
+      userId: jordan.id,
+      content: "Lot B2025-1115-A flagged marginal moisture variance. Need QA decision before 18:00.",
+      metadata: {
+        batch: "B2025-1115-A",
+        variance: "moisture",
+        deadline: "18:00"
+      }
     }
   });
 }

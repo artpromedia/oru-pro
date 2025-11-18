@@ -41,6 +41,7 @@ backend/               # Express + Prisma operations API powering health + telem
   - `/api/monitoring/*` exposes the Prompt 6 real-time monitoring dashboard API with StatsD-backed system gauges, tenant-scoped business/agent metrics, live Bull/BullMQ queue telemetry, cached alert feeds, and Socket.IO broadcasts for every org room (`org:<tenantId>`).
   - `/api/decisions/*` exposes the decision registry, batch review, AI noise/bias analysis, and automation endpoints that can spin up procurement POs or production schedules directly from approvals.
   - `/api/agents/*` introduces Prompt 5's agent management APIs for rosters, KPIs, recent activity, config updates, and runtime command dispatch.
+  - `/api/comms/*` now backs the Slack-grade execution comms hub with channel listings, message CRUD, reactions, pins, and Redis-powered presence so the Next.js dashboard reads/writes real Prisma data.
   - `apps/api/src/services/inventoryService.ts` now powers the low-stock/expiry/QA business logic bridge, emitting Redis + Socket.IO alerts while auto-triggering AI recommendations, PO drafts, and QA approvals through the InventoryAgent.
   - `/api/auth/*` now powers login, MFA verification, bearer session refresh, logout, and tenant-scoped user management (list/create/update/reset) backed by bcrypt, JWT, Speakeasy TOTP, and email stubs.
 - Prisma data model: `backend/prisma/schema.prisma` mirrors the multi-tenant org, inventory, production, procurement, and agent requirements outlined in the prompt; `pnpm --filter @oru/backend prisma generate` keeps the client fresh.

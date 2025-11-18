@@ -25,6 +25,7 @@ model Organization {
   projects      Project[]
   decisions     Decision[]
   agents        Agent[]
+  commsChannels CommsChannel[]
 }
 
 model User {
@@ -51,6 +52,82 @@ model Role {
   name        String
   permissions Json
   users       User[]
+}
+
+// Communications & Collaboration
+model CommsChannel {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  name           String
+  slug           String
+  type           String   @default("channel") // channel, direct, group
+  isPrivate      Boolean  @default(false)
+  topic          String?
+  createdBy      String
+  pinnedMetadata Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  members        CommsChannelMember[]
+  messages       CommsMessage[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId, type])
+}
+
+model CommsChannelMember {
+  id          String   @id @default(cuid())
+  channelId   String
+  channel     CommsChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  userId      String
+  userName    String
+  userAvatar  String?
+  role        String   @default("member")
+  isMuted     Boolean  @default(false)
+  lastReadAt  DateTime?
+  unreadCount Int      @default(0)
+  joinedAt    DateTime @default(now())
+
+  @@unique([channelId, userId])
+  @@index([userId])
+}
+
+model CommsMessage {
+  id             String   @id @default(cuid())
+  channelId      String
+  channel        CommsChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  authorId       String
+  authorName     String
+  authorAvatar   String?
+  content        String
+  attachments    Json?
+  metadata       Json?
+  isPinned       Boolean  @default(false)
+  isRead         Boolean  @default(false)
+  threadParentId String?
+  threadParent   CommsMessage? @relation("CommsThread", fields: [threadParentId], references: [id])
+  threadMessages CommsMessage[] @relation("CommsThread")
+  reactions      CommsReaction[]
+  editedAt       DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([channelId, createdAt])
+  @@index([threadParentId])
+}
+
+model CommsReaction {
+  id        String   @id @default(cuid())
+  messageId String
+  message   CommsMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  emoji     String
+  userId    String
+  userName  String
+  createdAt DateTime @default(now())
+
+  @@unique([messageId, emoji, userId])
+  @@index([messageId])
 }
 
 // Inventory Management
