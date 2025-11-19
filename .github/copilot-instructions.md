@@ -95,6 +95,7 @@
   - `/industries/manufacturing/transactions` implements Prompt 3's precision manufacturing transaction cockpit with CNC, additive, QC, assembly, maintenance, and tooling workflows.
   - `/industries/retail/transactions` implements Prompt 4's retail & e-commerce transaction hub covering omnichannel orders, POS, transfers, returns, price markdowns, and customer service recovery.
   - `/industries/healthcare/transactions` implements Prompt 5's healthcare provider cockpit for admissions, surgeries, medication safety, critical labs, discharge planning, and implant logistics.
+  - `/master-data` implements Prompt 3's XD/XK replacement with AI deduplication, data quality telemetry, and golden record governance.
   - `/master-data/materials` implements Prompt 2's master data control tower aggregating materials, vendors, BOMs, work centers, and routings.
   - `/operations/batch-management` implements Prompt 3's batch traceability workspace with genealogy, movements, and recall readiness metrics.
   - `/pricing` implements the Business Model Agent marketing experience with seat calculator, plan matrix, ROI calculator, and FAQ/CTA blocks.

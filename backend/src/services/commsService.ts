@@ -56,9 +56,9 @@ export type UpdateMessageInput = {
   metadata?: Prisma.JsonValue | null;
 };
 
-const mapMessage = (message: Prisma.CommsMessageGetPayload<{
-  include: { reactions: true; threadMessages: true };
-}>): MessageDTO => ({
+const messageRelations = { reactions: true, threadMessages: true } as const;
+
+const mapMessage = (message: Prisma.CommsMessageGetPayload<{ include: typeof messageRelations }>): MessageDTO => ({
   id: message.id,
   channelId: message.channelId,
   authorId: message.authorId,
@@ -88,6 +88,11 @@ const aggregateReactions = (reactions: Prisma.CommsReactionGetPayload<{}>[]) => 
 };
 
 const resolveTenant = (tenantId?: string) => tenantId ?? 'demo';
+
+const asJsonInput = (value?: Prisma.JsonValue | null) => {
+  if (value === undefined) return undefined;
+  return value === null ? Prisma.JsonNull : value;
+};
 
 class CommsService {
   async listChannels(tenantId?: string, userId?: string): Promise<ChannelSummary[]> {
@@ -138,7 +143,7 @@ class CommsService {
     const limit = Math.min(options?.limit ?? 50, 200);
     const cursorDate = options?.cursor ? new Date(options.cursor) : undefined;
 
-    const messages = await prisma.commsMessage.findMany({
+  const messages = await prisma.commsMessage.findMany({
       where: {
         channelId,
         channel: { organizationId: resolveTenant(tenantId) },
@@ -146,7 +151,7 @@ class CommsService {
       },
       orderBy: { createdAt: 'desc' },
       take: limit,
-      include: { reactions: true, threadMessages: true },
+  include: messageRelations,
     });
 
     return messages.reverse().map(mapMessage);
@@ -176,11 +181,11 @@ class CommsService {
         authorName: input.authorName,
         authorAvatar: input.authorAvatar,
         content: input.content,
-        attachments: input.attachments,
-        metadata: input.metadata,
+        attachments: asJsonInput(input.attachments),
+        metadata: asJsonInput(input.metadata),
         threadParentId: input.threadParentId,
       },
-      include: { reactions: true, threadMessages: true },
+      include: messageRelations,
     });
 
     await prisma.commsChannel.update({ where: { id: channel.id }, data: { updatedAt: new Date() } });
@@ -198,11 +203,11 @@ class CommsService {
       where: { id: message.id },
       data: {
         content: input.content,
-        attachments: input.attachments,
-        metadata: input.metadata,
+        attachments: asJsonInput(input.attachments),
+        metadata: asJsonInput(input.metadata),
         editedAt: new Date(),
       },
-      include: { reactions: true, threadMessages: true },
+      include: messageRelations,
     });
 
     return mapMessage(updated);
@@ -238,7 +243,7 @@ class CommsService {
 
     const refreshed = await prisma.commsMessage.findUnique({
       where: { id: message.id },
-      include: { reactions: true, threadMessages: true },
+      include: messageRelations,
     });
 
     if (!refreshed) {
@@ -253,7 +258,7 @@ class CommsService {
     const updated = await prisma.commsMessage.update({
       where: { id: message.id },
       data: { isPinned },
-      include: { reactions: true, threadMessages: true },
+      include: messageRelations,
     });
     return mapMessage(updated);
   }

@@ -1,3 +1,4 @@
+import './env';
 import http from 'http';
 import compression from 'compression';
 import cors from 'cors';
@@ -12,6 +13,7 @@ import { authMiddleware } from './middleware/auth';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import healthRouter from './routes/health';
 import operationsRouter from './routes/operations';
+import inventoryRouter from './routes/inventory.routes';
 import decisionRouter from './routes/decision.routes';
 import agentRouter from './routes/agent.routes';
 import authRouter from './routes/auth.routes';
@@ -232,6 +234,7 @@ app.use(authMiddleware);
 
 app.use('/health', healthRouter);
 app.use('/api/operations', operationsRouter);
+app.use('/api/inventory', inventoryRouter);
 app.use('/api/decisions', decisionRouter);
 app.use('/api/agents', agentRouter);
 app.use('/api/auth', authRouter);

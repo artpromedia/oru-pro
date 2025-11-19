@@ -180,3 +180,113 @@ export const uploadDocument = async (file: File) => {
 
   return response.json() as Promise<DocumentUploadResponse>;
 };
+
+export type ShipmentLocation = {
+  name: string;
+  address: string;
+  coordinates: { lat: number; lng: number };
+  type: "plant" | "warehouse" | "customer" | "3pl";
+};
+
+export type ShipmentRoute = {
+  origin: ShipmentLocation;
+  destination: ShipmentLocation;
+  stops: ShipmentLocation[];
+  distance: number;
+  duration: number;
+};
+
+export type ShipmentVehicle = {
+  type: string;
+  licensePlate: string;
+  temperature?: number;
+  capacity: number;
+};
+
+export type ShipmentDocument = {
+  id: string;
+  type: string;
+  status: string;
+  owner: string;
+  updatedAt: string;
+  storageUrl?: string;
+};
+
+export type ShipmentEvent = {
+  id: string;
+  timestamp: string;
+  location: string;
+  detail: string;
+  type: "checkpoint" | "delay" | "milestone";
+};
+
+export type ShipmentSensor = {
+  id: string;
+  type: "temperature" | "shock" | "humidity" | "geo";
+  value: number;
+  unit: string;
+  status: "ok" | "warning" | "critical";
+  timestamp: string;
+};
+
+export type LogisticsShipment = {
+  id: string;
+  tenantId: string;
+  shipmentNumber: string;
+  type: "inbound" | "outbound" | "transfer";
+  status: "planned" | "loading" | "in-transit" | "delivered" | "exception";
+  carrier: { name: string; id: string; rating: number };
+  deliveries: string[];
+  route: ShipmentRoute;
+  vehicle: ShipmentVehicle;
+  scheduledDate: string;
+  actualDate?: string | null;
+  tracking: string;
+  documents: ShipmentDocument[];
+  costs: { freight: number; fuel: number; total: number };
+  events: ShipmentEvent[];
+  sensors: ShipmentSensor[];
+  updatedAt: string;
+};
+
+export type CreateShipmentPayload = {
+  tenantId: string;
+  shipmentNumber?: string;
+  type?: LogisticsShipment["type"];
+  status?: LogisticsShipment["status"];
+  carrier?: LogisticsShipment["carrier"];
+  deliveries?: string[];
+  route?: ShipmentRoute;
+  vehicle?: ShipmentVehicle;
+  scheduledDate?: string;
+  actualDate?: string | null;
+  tracking?: string;
+  documents?: ShipmentDocument[];
+  costs?: LogisticsShipment["costs"];
+  events?: ShipmentEvent[];
+  sensors?: ShipmentSensor[];
+  createdBy?: string;
+};
+
+export type UpdateShipmentStatusPayload = {
+  tenantId: string;
+  status: LogisticsShipment["status"];
+};
+
+type ShipmentsResponse = { shipments: LogisticsShipment[] };
+type ShipmentResponse = { shipment: LogisticsShipment };
+
+export const fetchLogisticsShipments = (tenantId: string) =>
+  apiFetch<ShipmentsResponse>(`/api/logistics/shipments?tenantId=${encodeURIComponent(tenantId)}`).then((res) => res.shipments);
+
+export const createLogisticsShipment = (payload: CreateShipmentPayload) =>
+  apiFetch<ShipmentResponse>("/api/logistics/shipments", {
+    method: "POST",
+    body: payload,
+  }).then((res) => res.shipment);
+
+export const updateLogisticsShipmentStatus = (shipmentNumber: string, payload: UpdateShipmentStatusPayload) =>
+  apiFetch<ShipmentResponse>(`/api/logistics/shipments/${encodeURIComponent(shipmentNumber)}/status`, {
+    method: "PATCH",
+    body: payload,
+  }).then((res) => res.shipment);

@@ -42,6 +42,7 @@ backend/               # Express + Prisma operations API powering health + telem
   - `/api/decisions/*` exposes the decision registry, batch review, AI noise/bias analysis, and automation endpoints that can spin up procurement POs or production schedules directly from approvals.
   - `/api/agents/*` introduces Prompt 5's agent management APIs for rosters, KPIs, recent activity, config updates, and runtime command dispatch.
   - `/api/comms/*` now backs the Slack-grade execution comms hub with channel listings, message CRUD, reactions, pins, and Redis-powered presence so the Next.js dashboard reads/writes real Prisma data.
+  - `/api/inventory` now serves the realtime inventory pulse feed that powers `apps/web/app/page.tsx`, emitting `InventorySnapshot[]` data with optional `tenantId`, `limit`, `qa`, and `coldChain` query filters straight from the Prisma `Inventory` table.
   - `apps/api/src/services/inventoryService.ts` now powers the low-stock/expiry/QA business logic bridge, emitting Redis + Socket.IO alerts while auto-triggering AI recommendations, PO drafts, and QA approvals through the InventoryAgent.
   - `/api/auth/*` now powers login, MFA verification, bearer session refresh, logout, and tenant-scoped user management (list/create/update/reset) backed by bcrypt, JWT, Speakeasy TOTP, and email stubs.
 - Prisma data model: `backend/prisma/schema.prisma` mirrors the multi-tenant org, inventory, production, procurement, and agent requirements outlined in the prompt; `pnpm --filter @oru/backend prisma generate` keeps the client fresh.
@@ -116,6 +117,8 @@ Paste the resulting hash into both `.env` (API) and `.env.local` (web), then set
 ## Forge marketplace, SAP migration kit, and document control
 
 - `/forge` exposes the Oonru Forge marketplace with curated categories, installed app health, developer SDK downloads, and a live-code builder for partner extensions.
+- Forge builder UI now consumes these endpoints with a catalog modal (filters, installs, reviews) plus an AI assistant that can scaffold inventory, quality, and procurement blueprints directly on the canvas.
+- Forge marketplace APIs now live under `apps/web/app/api/forge/marketplace/*`, including `GET /forge/marketplace` for catalog search, `POST /forge/marketplace/install` for workspace installs, and `GET|POST /forge/marketplace/[appId]/ratings` for AI copilot review telemetry.
 - `/migration/sap` delivers the SAP migration kit featuring phase timelines, connection assistants, module selection, and table-level mapping previews across ECC/S/4 workloads.
 - `/documents` introduces the AI-assisted document cockpit with drag-and-drop uploads, compliance indicators, and inline actions; uploads call `/api/v1/documents` for real persistence.
 - `/api/v1/documents` is backed by `storageManager`, `aiDocumentProcessor`, and `complianceChecker`, handling hashing, duplicate detection, secure storage, AI enrichment, compliance validation, auditing, and Redis-based search indexing.
@@ -149,6 +152,11 @@ This launches Postgres, Redis, RabbitMQ, Qdrant, StatsD, Grafana, MinIO, Mailhog
 docker compose -f docker-compose.dev.yml down -v
 ```
 
+## Development tips
+
+- **Next.js dev port**: `pnpm dev` expects port 3000 for the web app. If it's already taken (for example by another Next.js instance), the dev server automatically hops to 3001. Free the port or browse `http://localhost:3001` when that happens.
+- **Lingering Node processes**: When turborepo tasks crash on Windows they can leave dozens of orphaned `node.exe` processes that hold locks on Prisma engine DLLs. Run `Stop-Process -Name node -Force` in PowerShell before restarting `pnpm dev` to release the files.
+
 ## Testing + quality gates
 
 ```powershell
@@ -166,6 +174,7 @@ Python services rely on uv or pip; each folder contains its own `pyproject.toml`
 - `/login`, `/execution/projects`, and `/execution/decisions` are now backed by lightweight Next.js API routes plus React Query hooks, so UI flows exercise real request/response paths even before the Express/tRPC APIs land.
 - `pnpm --filter web build` passes, so the Next.js frontend is production-build ready after the most recent UI refresh.
 - Back-end services and agents remain unchanged from the initial import; no additional migrations or schema updates were required for this UI iteration.
+- The global toast event bus (`apps/web/hooks/use-toast.ts`) now drives the in-app `ToastViewport`, so any feature can dispatch cross-cutting success/error notifications without pulling in an external UI kit.
 
 - `/intelligence/agents` (Prompt 10) now surfaces the multi-agent operations cockpit with confidence metrics, performance charting, and inline configuration controls for each autonomous copilot.
 - `/mobile/warehouse` (Prompt 11) delivers the mobile-first warehouse companion with live shift stats, task queue, scanner hand-off, dock visibility, and quick action tiles.
@@ -187,8 +196,9 @@ Python services rely on uv or pip; each folder contains its own `pyproject.toml`
 - `/operations/production` (Prompt 1 production module) layers BOM consumption, line telemetry, QA checkpoints, and shop-floor activity for live manufacturing control.
 - `/operations/procurement` (Prompt 2 procurement module) centralizes PO triage, supplier health, approvals, and AI sourcing insights.
 - `/operations/logistics` (Prompt 5 TMS module) tracks deliveries, optimized routes, fleet utilization, and cold-chain alerts for the transportation team.
-- `/operations/physical-inventory` (Prompt 4 SAP add-on) orchestrates cycle counting, variance clearing, ABC segmentation, and count scheduling in one cockpit.
+- `/operations/physical-inventory` (Prompt 4 SAP add-on) now replaces LI01N/LI11N/LI14/LI21 with a single AI-assisted command center covering document orchestration, scanner/mobile counting, variance intelligence, and ABC cadence governance.
 - `/operations/stock-transfers` (Prompt 5 SAP add-on) manages inter-plant/inter-company STOs with item-level ATP, logistics, documents, and stock comparison checks.
+- `/operations/goods-movement` replaces SAP MB*/LT* with a unified control tower that covers MIGO posting, MB03/51 audit trails, LT01/10 transfer orchestration, HU/SU label workbench, FEFO-aware AI guardrails, and cold-chain/allergen telemetry.
 - `/sales/orders` replaces SAP SD (VA01/VA02, VL01N/VL02N, VF01/VF04) with a unified AI sales & distribution control tower covering order capture, ATP, credit, delivery orchestration, billing automation, and decision analytics.
 - `/navigation/tcode` (Prompt 6 SAP add-on) delivers the T-code quick launch workspace with favorites, recent history, module directory, and workflow shortcuts.
 - `/planning/mrp` (Prompt 1) introduces the SAP-grade MRP + capacity cockpit with shortage detection, planned order conversion, and line bottleneck telemetry.
@@ -209,6 +219,7 @@ Python services rely on uv or pip; each folder contains its own `pyproject.toml`
 - `/employee/self-service` (Prompt 2) brings the ADP-style portal with payroll insights, time-off management, timesheets, benefits, and actionable employee tasks.
 - `/collaboration/workspace` (Prompt 3) mirrors the Slack operations workspace with channels, direct messages, rich message blocks, reactions, and thread previews.
 - `/master-data/materials` (Prompt 2) centralizes materials, vendors, BOM hierarchies, work centers, and routings for holistic master data governance.
+- `/master-data` (Prompt 3) replaces SAP XD/XK customer/vendor masters with AI cleansing, golden records, and deduplication workflows.
 - `/operations/batch-management` (Prompt 3) delivers bidirectional batch genealogy, movement history, and recall readiness KPIs for QA traceability drills.
 
 ## Offline + mobile readiness
