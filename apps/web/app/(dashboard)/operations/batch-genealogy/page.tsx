@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -27,6 +27,7 @@ import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { useDebounce } from "@/hooks/useDebounce";
 import { fetcher } from "@/lib/fetcher";
+import type { TraceabilityNode, TraceabilityEdge } from "@/components/traceability/ForceGraph";
 
 const ForceGraph = dynamic(() => import("@/components/traceability/ForceGraph"), { ssr: false });
 const Timeline = dynamic(() => import("@/components/traceability/Timeline"), { ssr: false });
@@ -158,6 +159,40 @@ export default function BatchGenealogyPage() {
   useEffect(() => {
     setSelectedNode(null);
   }, [viewMode, debouncedBatch]);
+
+  const handleNodeClick = useCallback((node: TraceabilityNode) => {
+    setSelectedNode((prev) => ({
+      id: node.id,
+      batch: node.batch ?? prev?.batch ?? "Unknown batch",
+      material: node.material ?? prev?.material ?? "Unknown material",
+      type: (node.type as GenealogyNode["type"]) ?? prev?.type ?? "raw",
+      status: (node.status as GenealogyNode["status"]) ?? prev?.status ?? "released",
+      qty: node.qty ?? prev?.qty ?? 0,
+      uom: node.uom ?? prev?.uom ?? "EA",
+      date: node.date ?? prev?.date ?? new Date().toISOString(),
+      location: node.location ?? prev?.location,
+  qualityScore: node.qualityScore ?? prev?.qualityScore,
+  temperatureExcursions: prev?.temperatureExcursions,
+      alerts: node.alerts ?? prev?.alerts,
+    }));
+  }, []);
+
+  const handleEdgeHover = useCallback((edge: TraceabilityEdge | null) => {
+    if (!edge) {
+      setHoverEdge(null);
+      return;
+    }
+    setHoverEdge((prev) => ({
+      id: edge.id ?? prev?.id ?? `${edge.source}-${edge.target}`,
+      source: edge.source,
+      target: edge.target,
+      relationship: prev?.relationship ?? "consumes",
+      qty: edge.qty ?? prev?.qty ?? 0,
+      uom: edge.uom ?? prev?.uom ?? "EA",
+      date: edge.date ?? prev?.date ?? new Date().toISOString(),
+      traceConfidence: edge.traceConfidence ?? prev?.traceConfidence ?? 90,
+    }));
+  }, []);
 
   const analytics = useMemo(() => {
     if (!data) return null;
@@ -406,8 +441,8 @@ export default function BatchGenealogyPage() {
                     edges={data.genealogy.edges}
                     riskLayer={riskLayer}
                     coverage={coverageMode}
-                    onNodeClick={setSelectedNode}
-                    onEdgeHover={setHoverEdge}
+                    onNodeClick={handleNodeClick}
+                    onEdgeHover={handleEdgeHover}
                   />
                 )}
                 {viewMode === "timeline" && (

@@ -6,7 +6,6 @@ import {
   AlertTriangle,
   Box,
   Boxes,
-  Cube,
   Gauge,
   Layers3,
   Map,
@@ -402,7 +401,7 @@ function WarehouseStacks({
         >
           <div className="flex items-center justify-between">
             <p className="text-sm font-semibold text-gray-900">Zone {zone.id}</p>
-            <Cube className="h-4 w-4 text-gray-400" />
+            <Box className="h-4 w-4 text-gray-400" />
           </div>
           <p className="text-xs text-gray-500">{zone.type}</p>
           <div className="mt-4 h-32 flex items-end gap-1">

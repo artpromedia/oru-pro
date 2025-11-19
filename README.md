@@ -189,6 +189,7 @@ Python services rely on uv or pip; each folder contains its own `pyproject.toml`
 - `/operations/logistics` (Prompt 5 TMS module) tracks deliveries, optimized routes, fleet utilization, and cold-chain alerts for the transportation team.
 - `/operations/physical-inventory` (Prompt 4 SAP add-on) orchestrates cycle counting, variance clearing, ABC segmentation, and count scheduling in one cockpit.
 - `/operations/stock-transfers` (Prompt 5 SAP add-on) manages inter-plant/inter-company STOs with item-level ATP, logistics, documents, and stock comparison checks.
+- `/sales/orders` replaces SAP SD (VA01/VA02, VL01N/VL02N, VF01/VF04) with a unified AI sales & distribution control tower covering order capture, ATP, credit, delivery orchestration, billing automation, and decision analytics.
 - `/navigation/tcode` (Prompt 6 SAP add-on) delivers the T-code quick launch workspace with favorites, recent history, module directory, and workflow shortcuts.
 - `/planning/mrp` (Prompt 1) introduces the SAP-grade MRP + capacity cockpit with shortage detection, planned order conversion, and line bottleneck telemetry.
 - `/portal` (Prompt 3 partner portal) gives suppliers/3PLs a consolidated dashboard for orders, shipments, docs, and analytics entry points.

@@ -225,29 +225,23 @@ export default function CommunicationHub() {
     },
   });
 
-  const reactionMutation = useMutation<CommsMessage, Error, { messageId: string; emoji: string }>(
-    ({ messageId, emoji }) => toggleCommsReaction(messageId, emoji),
-    {
-      onSuccess: optimisticUpdate,
-    },
-  );
+  const reactionMutation = useMutation<CommsMessage, Error, { messageId: string; emoji: string }>({
+    mutationFn: ({ messageId, emoji }) => toggleCommsReaction(messageId, emoji),
+    onSuccess: optimisticUpdate,
+  });
 
-  const pinMutation = useMutation<CommsMessage, Error, { messageId: string; isPinned: boolean }>(
-    ({ messageId, isPinned }) => pinCommsMessage(messageId, isPinned),
-    {
-      onSuccess: optimisticUpdate,
-    },
-  );
+  const pinMutation = useMutation<CommsMessage, Error, { messageId: string; isPinned: boolean }>({
+    mutationFn: ({ messageId, isPinned }) => pinCommsMessage(messageId, isPinned),
+    onSuccess: optimisticUpdate,
+  });
 
-  const { mutate: editMessage } = useMutation<CommsMessage, Error, { messageId: string; content: string }>(
-    ({ messageId, content }) => updateCommsMessage(messageId, { content }),
-    {
-      onSuccess: (message) => {
-        optimisticUpdate(message);
-        setEditingMessage(null);
-      },
+  const { mutate: editMessage } = useMutation<CommsMessage, Error, { messageId: string; content: string }>({
+    mutationFn: ({ messageId, content }) => updateCommsMessage(messageId, { content }),
+    onSuccess: (message) => {
+      optimisticUpdate(message);
+      setEditingMessage(null);
     },
-  );
+  });
 
   const handleSend = useCallback(() => {
     if (!messageInput.trim() || !selectedChannel || !user) return;
