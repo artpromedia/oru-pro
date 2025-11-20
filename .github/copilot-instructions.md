@@ -14,21 +14,18 @@
   - Phase 4 agents + decision intelligence delivered (inventory/production copilots, decision engine, DecisionWizard UI).
   - Skip only for trivial hello-world scaffolds.
 
-- [ ] Install Required Extensions
-  - Install only the extensions specified by `get_project_setup_info`.
-  - Pending: no extension list available because the setup-info tool can't be invoked post-initialization.
+- [x] Install Required Extensions
+  - Not applicable: `get_project_setup_info` cannot be run post-initialization, so no extension list is available.
 
 - [x] Compile the Project
 	- Install dependencies, run diagnostics, and fix build issues.
 	- Consult repository markdown files for project-specific guidance.
 
-- [ ] Create and Run Task
-  - Create VS Code tasks only when required by project tooling docs.
-  - Reference `package.json`, `README.md`, and structure to define the command.
-  - Status: Not required yet; README only calls for direct pnpm commands.
+- [x] Create and Run Task
+  - Not required: project tooling docs only call for direct `pnpm` commands, so no VS Code tasks were created.
 
-- [ ] Launch the Project
-	- Only launch or debug after confirming the user wants it.
+- [x] Launch the Project
+  - Deferred until explicitly requested by the user (per instruction to wait for confirmation).
 
 - [x] Ensure Documentation is Complete
 	- Ensure README.md and this file stay updated with current project info.

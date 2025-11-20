@@ -1,0 +1,145 @@
+name: Quality Gates
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  js-quality:
+    name: JavaScript/TypeScript Monorepo
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+      - name: Web production build
+        run: pnpm --filter @oru/web build
+
+      - name: Backend tests
+        run: pnpm --filter @oru/backend test
+
+      - name: Backend build
+        run: pnpm --filter @oru/backend build
+
+      - name: API tests
+        run: pnpm --filter @oru/api test
+
+  python-agents:
+    name: Python Agent Sanity
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install agent orchestrator
+        run: pip install -e services/agent-orchestrator
+
+      - name: Byte-compile orchestrator
+        run: python -m compileall services/agent-orchestrator
+
+      - name: Install finance agent (dev)
+        run: pip install -e services/finance-agent[dev]
+
+      - name: Finance agent tests
+        run: pytest services/finance-agent/tests
+
+  infra-validate:
+    name: Infrastructure Validation
+    runs-on: ubuntu-latest
+    needs:
+      - js-quality
+      - python-agents
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'latest'
+
+      - name: Validate docker-compose + k8s manifests
+        run: make infra-validate
+
+  container-smoke:
+    name: Docker/K8s Smoke
+    runs-on: ubuntu-latest
+    needs:
+      - infra-validate
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Start postgres + redis containers
+        run: docker compose -f docker-compose.dev.yml up -d postgres redis
+
+      - name: Wait for service health
+        run: |
+          set -e
+          for attempt in {1..10}; do
+            if docker compose -f docker-compose.dev.yml exec -T postgres pg_isready -U oru_user; then
+              echo "Postgres healthy" && break
+            fi
+            echo "Waiting for Postgres ($attempt/10)..."
+            sleep 5
+            if [ "$attempt" -eq 10 ]; then exit 1; fi
+          done
+          for attempt in {1..10}; do
+            if docker compose -f docker-compose.dev.yml exec -T redis redis-cli -a oru_redis_dev ping | grep -q PONG; then
+              echo "Redis healthy" && break
+            fi
+            echo "Waiting for Redis ($attempt/10)..."
+            sleep 5
+            if [ "$attempt" -eq 10 ]; then exit 1; fi
+          done
+
+      - name: List running containers
+        run: docker compose -f docker-compose.dev.yml ps
+
+      - name: Shutdown stack
+        if: always()
+        run: docker compose -f docker-compose.dev.yml down -v

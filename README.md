@@ -1,5 +1,7 @@
 # Oonru Autonomous Enterprise Platform
 
+[![Quality Gates](https://github.com/artpromedia/oru-pro/actions/workflows/quality.yml/badge.svg)](https://github.com/artpromedia/oru-pro/actions/workflows/quality.yml)
+
 Production-ready monorepo that powers the Oonru operational wedge for F&B enterprises. It pairs a Next.js 14 frontline UI with Express/tRPC APIs and Pythonic decision agents orchestrated via FastAPI.
 
 ## Monorepo layout
@@ -163,9 +165,34 @@ docker compose -f docker-compose.dev.yml down -v
 pnpm lint
 pnpm typecheck
 pnpm test
+pnpm --filter @oru/backend test   # Express smoke tests
+pnpm --filter @oru/web build      # Production Next.js sanity
 ```
 
-Python services rely on uv or pip; each folder contains its own `pyproject.toml`. Use `uv sync` or `pip install -e .` as preferred.
+Python services rely on uv or pip; each folder contains its own `pyproject.toml`. Use `uv sync` or `pip install -e .` as preferred. The agent orchestrator is validated automatically via `pip install -e services/agent-orchestrator && python -m compileall services/agent-orchestrator` inside `.github/workflows/quality.yml`.
+
+Infrastructure verification:
+
+```powershell
+make infra-validate
+# (runs docker compose config + optional kubectl --dry-run)
+```
+
+> CI: The `Quality Gates` workflow executes `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and the Python agent sanity checks on every push/PR to `main`.
+
+## Beta release checklist
+
+1. Confirm `git status -sb` is clean (or only contains intentional version bumps) so the beta tag reflects committed changes.
+2. Run the full JS/TS battery locally (`pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm --filter @oru/web test:e2e`, `pnpm --filter @oru/backend test`, and `pnpm --filter @oru/api test`).
+3. Build both the frontend and backend (`pnpm --filter @oru/web build`, `pnpm --filter @oru/backend build`) to ensure there are no production-only regressions.
+4. Reinstall and validate the FastAPI services:
+
+   - `pip install -e services/agent-orchestrator && python -m compileall services/agent-orchestrator`
+   - `pip install -e services/finance-agent[dev] && pytest services/finance-agent/tests`
+
+5. Smoke the shared infrastructure locally: `make infra-validate` followed by `docker compose -f docker-compose.dev.yml up -d postgres redis` and wait for `pg_isready` + `redis-cli ping` to succeed before running `docker compose -f docker-compose.dev.yml down -v`.
+6. Confirm the `Quality Gates` workflow (including the Docker/K8s Smoke job) is green on the commit you intend to tag for beta and capture the run URL in release notes (the badge above links to the latest run).
+7. Verify the manual beta scenarios (login + MFA, operations dashboards, AI decision wizard) against the staging environment and record any exceptions in the release log.
 
 ## Notes
 
