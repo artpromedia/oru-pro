@@ -1,0 +1,9 @@
+Metadata-Version: 2.4
+Name: oru-agent-sdk
+Version: 0.1.0
+Summary: Shared base classes for Oru decision agents
+Author: Oru
+Requires-Python: >=3.11
+Requires-Dist: fastapi[all]==0.115.0
+Requires-Dist: pydantic==2.7.4
+Requires-Dist: celery[redis]==5.4.0

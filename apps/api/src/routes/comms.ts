@@ -1,6 +1,7 @@
+import { Prisma } from "@prisma/client";
 import { Router, type Request, type Response } from "express";
 import { z } from "zod";
-import { commsService } from "../services/commsService.js";
+import { commsService, type AttachmentPayload } from "../services/commsService.js";
 
 const router = Router();
 
@@ -38,6 +39,30 @@ const paginationSchema = z.object({
   cursor: z.string().optional(),
   limit: z.coerce.number().int().positive().max(100).optional()
 });
+
+const toJsonValue = (value: unknown): Prisma.InputJsonValue | null | undefined => {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  return value as Prisma.InputJsonValue;
+};
+
+const mapAttachments = (attachments?: Array<z.infer<typeof attachmentSchema>> | null): AttachmentPayload[] | undefined => {
+  if (!attachments || attachments.length === 0) {
+    return undefined;
+  }
+
+  return attachments.map((attachment) => {
+    const metadata = toJsonValue(attachment.metadata);
+    return {
+      id: attachment.id,
+      name: attachment.name,
+      type: attachment.type,
+      url: attachment.url,
+      size: attachment.size,
+      ...(metadata !== undefined ? { metadata } : {})
+    } satisfies AttachmentPayload;
+  });
+};
 
 const resolveOrganizationId = (req: Request) => {
   const queryValue = typeof req.query.organizationId === "string" ? req.query.organizationId : undefined;
@@ -98,8 +123,11 @@ router.post("/channels/:channelId/messages", async (req, res) => {
       userId: resolveUserId(req) ?? undefined,
       channelId: req.params.channelId,
       content: payload.content,
-      attachments: payload.attachments ?? undefined,
-      metadata: payload.metadata ?? undefined,
+      attachments: mapAttachments(payload.attachments),
+      metadata: (() => {
+        const metadata = toJsonValue(payload.metadata);
+        return metadata === undefined ? undefined : metadata;
+      })(),
       threadParentId: payload.threadParentId ?? undefined
     });
     res.status(201).json({ message });
@@ -119,8 +147,11 @@ router.patch("/messages/:messageId", async (req, res) => {
       userId: resolveUserId(req) ?? undefined,
       messageId: req.params.messageId,
       content: payload.content,
-      attachments: payload.attachments ?? undefined,
-      metadata: payload.metadata ?? undefined
+      attachments: mapAttachments(payload.attachments),
+      metadata: (() => {
+        const metadata = toJsonValue(payload.metadata);
+        return metadata === undefined ? undefined : metadata;
+      })()
     });
     res.json({ message });
   } catch (error) {

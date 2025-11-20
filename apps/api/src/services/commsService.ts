@@ -32,7 +32,7 @@ type PresenceUserRecord = Prisma.UserGetPayload<{
   };
 }>;
 type ReactionGroup = { emoji: string; users: Array<{ id: string; name: string }> };
-type AttachmentPayload = {
+export type AttachmentPayload = {
   id?: string;
   name?: string | null;
   type?: string | null;

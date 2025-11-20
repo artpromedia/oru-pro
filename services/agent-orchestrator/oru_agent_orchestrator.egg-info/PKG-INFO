@@ -1,0 +1,52 @@
+Metadata-Version: 2.4
+Name: oru-agent-orchestrator
+Version: 0.1.0
+Summary: FastAPI service that coordinates domain-specific decision agents
+Author: Oru
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: fastapi[all]==0.115.0
+Requires-Dist: pydantic==2.7.4
+Requires-Dist: uvicorn[standard]==0.30.3
+Requires-Dist: redis==5.0.7
+Requires-Dist: langchain==0.2.12
+Requires-Dist: openai==1.37.1
+Requires-Dist: celery[redis]==5.4.0
+Requires-Dist: numpy==1.26.4
+Requires-Dist: scipy==1.11.4
+Requires-Dist: scikit-learn==1.4.2
+Requires-Dist: joblib==1.4.2
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: ruff; extra == "dev"
+
+# Agent Orchestrator Service
+
+This FastAPI service coordinates the in-process decision agents used by the platform. It exposes REST and WebSocket endpoints for deploying agents, executing actions, and streaming heartbeats. Redis is used for coordination and persistence of activity logs.
+
+## Local development
+
+1. Create a virtual environment with Python 3.11+ and install the service in editable mode:
+
+   ```bash
+   pip install -e .
+   ```
+
+2. Run the API locally:
+
+   ```bash
+   uvicorn main:app --reload
+   ```
+
+3. Ensure Redis is running (the default URL points to `redis://localhost:6379`).
+
+## Endpoints
+
+- `GET /health` – service health and agent roster
+- `POST /agents/deploy` – register a new configured agent
+- `POST /agents/{agent_id}/execute` – invoke an action on an agent
+- `GET /agents/{agent_id}/status` – inspect metrics and activity
+- `POST /agents/{agent_id}/control` – start/stop/pause/resume an agent
+- `WS /ws/agents/{agent_id}` – stream heartbeats and events from an agent
+
+Each built-in domain agent lives under `agents/` and extends the common `BaseAgent` for lifecycle control, telemetry, and Redis event emission.

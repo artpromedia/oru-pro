@@ -26,23 +26,43 @@ const baseComponentLayout = {
   zIndex: 1,
 };
 
-const createComponent = (id: string, type: AppComponent["type"], name: string, overrides = {}): AppComponent => ({
+type ComponentOverrides = {
+  config?: Partial<AppComponent["config"]>;
+  layout?: Partial<typeof baseComponentLayout>;
+  bindings?: AppComponent["bindings"];
+  events?: AppComponent["events"];
+  permissions?: AppComponent["permissions"];
+};
+
+const createComponent = (
+  id: string,
+  type: AppComponent["type"],
+  name: string,
+  overrides: ComponentOverrides = {}
+): AppComponent => ({
   id,
   type,
   name,
-  config: { ...baseConfig, ...("config" in overrides ? overrides.config : {}) },
-  layout: { ...baseComponentLayout, ...("layout" in overrides ? overrides.layout : {}) },
+  config: { ...baseConfig, ...(overrides.config ?? {}) },
+  layout: { ...baseComponentLayout, ...(overrides.layout ?? {}) },
   bindings: overrides.bindings ?? [],
   events: overrides.events ?? [],
   permissions: overrides.permissions ?? [],
 });
 
-const createWorkflow = (id: string, name: string, overrides = {}): Workflow => ({
+type WorkflowOverrides = {
+  trigger?: Record<string, unknown>;
+  condition?: Workflow["connections"][number]["condition"];
+  variables?: Workflow["variables"];
+  errorHandling?: Workflow["errorHandling"];
+};
+
+const createWorkflow = (id: string, name: string, overrides: WorkflowOverrides = {}): Workflow => ({
   id,
   name,
   trigger: {
     type: "event",
-    config: { event: "record.updated", ...("trigger" in overrides ? overrides.trigger : {}) },
+    config: { event: "record.updated", ...(overrides.trigger ?? {}) },
   },
   nodes: [
     {

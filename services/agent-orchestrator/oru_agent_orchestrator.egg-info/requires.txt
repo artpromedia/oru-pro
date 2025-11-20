@@ -1,0 +1,15 @@
+fastapi[all]==0.115.0
+pydantic==2.7.4
+uvicorn[standard]==0.30.3
+redis==5.0.7
+langchain==0.2.12
+openai==1.37.1
+celery[redis]==5.4.0
+numpy==1.26.4
+scipy==1.11.4
+scikit-learn==1.4.2
+joblib==1.4.2
+
+[dev]
+pytest
+ruff

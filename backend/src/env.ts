@@ -52,3 +52,7 @@ if (loadedLabels.length) {
 if (!process.env.DATABASE_URL) {
   console.warn('[env] DATABASE_URL is not set. Ensure your .env or .env.development file provides a Postgres connection string.');
 }
+export const envSummary = {
+  loadedFiles: [...loadedLabels],
+  candidates,
+};

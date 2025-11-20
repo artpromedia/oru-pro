@@ -1,0 +1,83 @@
+{
+  "inventory-control-suite": [
+    {
+      "appId": "inventory-control-suite",
+      "rating": 5,
+      "title": "Essential for regulated warehouses",
+      "feedback": "The AI slotting suggestions alone saved us hundreds of hours each quarter. Cycle count variance dropped 18% within the first month.",
+      "persona": "Director of Operations",
+      "org": "NexFoods",
+      "environment": "production",
+      "id": "review-opioh9z5j7s",
+      "createdAt": "2025-11-19T17:39:08.103Z",
+      "votes": {
+        "helpful": 0,
+        "notHelpful": 0
+      }
+    },
+    {
+      "appId": "inventory-control-suite",
+      "rating": 4,
+      "title": "Audit prep is painless now",
+      "feedback": "We pipe QA holds from SAP into the dashboard and the compliance export nails every FDA ask. Would love deeper RFID integrations next.",
+      "persona": "QA Lead",
+      "org": "PureBite Labs",
+      "environment": "staging",
+      "id": "review-fsw6ee4v38n",
+      "createdAt": "2025-11-19T17:39:08.103Z",
+      "votes": {
+        "helpful": 0,
+        "notHelpful": 0
+      }
+    }
+  ],
+  "quality-insights-pro": [
+    {
+      "appId": "quality-insights-pro",
+      "rating": 5,
+      "title": "Supplier collaboration in one place",
+      "feedback": "Shared NCR workspace with vendors plus the copilot summaries cut containment time by 40%.",
+      "persona": "Supplier Quality Manager",
+      "org": "FormaTech",
+      "environment": "production",
+      "id": "review-oi4p4gvdne",
+      "createdAt": "2025-11-19T17:39:08.103Z",
+      "votes": {
+        "helpful": 0,
+        "notHelpful": 0
+      }
+    },
+    {
+      "appId": "quality-insights-pro",
+      "rating": 4,
+      "title": "Great start for AI QA",
+      "feedback": "Love the guided investigations. Would appreciate more templates for pharma LOT releases.",
+      "persona": "QA Systems Owner",
+      "org": "BioVerse",
+      "environment": "production",
+      "id": "review-8igwjw33vpc",
+      "createdAt": "2025-11-19T17:39:08.103Z",
+      "votes": {
+        "helpful": 0,
+        "notHelpful": 0
+      }
+    }
+  ],
+  "procurement-cockpit": [
+    {
+      "appId": "procurement-cockpit",
+      "rating": 5,
+      "title": "Single source of supplier truth",
+      "feedback": "Our sourcing councils finally see risk scores, contracts, and AI negotiation briefs in one canvas. Massive uplift for quarterly planning.",
+      "persona": "VP Procurement",
+      "org": "Harvest & Co",
+      "environment": "production",
+      "id": "review-2znb9a0vas7",
+      "createdAt": "2025-11-19T17:39:08.103Z",
+      "votes": {
+        "helpful": 0,
+        "notHelpful": 0
+      }
+    }
+  ]
+}

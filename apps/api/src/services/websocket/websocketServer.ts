@@ -311,7 +311,7 @@ export class WebSocketServer {
       }
 
       if (Array.isArray(mentions) && mentions.length > 0) {
-        await this.processMentions(message, mentions);
+        await this.processMentions(message, mentions, socket.organizationId);
         await this.sendMentionNotifications(message, mentions);
       }
 
@@ -691,7 +691,7 @@ export class WebSocketServer {
     return Boolean(membership);
   }
 
-  private async processMentions(message: any, mentions: string[]) {
+  private async processMentions(message: any, mentions: string[], organizationId: string) {
     for (const username of mentions) {
       const user = await db.user?.findFirst?.({
         where: { name: username }
@@ -701,6 +701,7 @@ export class WebSocketServer {
         await db.notification?.create?.({
           data: {
             userId: user.id,
+            organizationId,
             type: "mention",
             title: `${message.user?.name ?? "Someone"} mentioned you`,
             message: message.content?.substring(0, 100) ?? "",

@@ -72,6 +72,7 @@ jest.mock("../lib/ai/index.js", () => ({
 
 const redisState = new Map<string, string>();
 const redisMock = {
+	on: jest.fn(),
 	keys: jest.fn(async () => Array.from(redisState.keys())),
 	del: jest.fn(async (...keys: string[]) => {
 		keys.forEach((key) => redisState.delete(key));

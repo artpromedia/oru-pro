@@ -1,0 +1,7 @@
+pyproject.toml
+src/bom_optimizer.py
+src/production_agent.egg-info/PKG-INFO
+src/production_agent.egg-info/SOURCES.txt
+src/production_agent.egg-info/dependency_links.txt
+src/production_agent.egg-info/requires.txt
+src/production_agent.egg-info/top_level.txt

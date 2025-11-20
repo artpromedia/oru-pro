@@ -6,64 +6,133 @@
   - Environments: .env.local
 
    Creating an optimized production build ...
+> [PWA] Compile server
+> [PWA] Compile server
+> [PWA] Compile client (static)
+> [PWA] Auto register service worker with: C:\Users\ofema\Oru-Pro\node_modules\.pnpm\next-pwa@5.6.0_@babel+core@7.28.5_@types+babel__core@7.20.5_next@14.2.5_@babel+core@7.28.5_re_wzozvmcggud6jyhkq5zgmpllbm\node_modules\next-pwa\register.js
+> [PWA] Service worker: C:\Users\ofema\Oru-Pro\apps\web\public\sw.js
+> [PWA]   url: /sw.js
+> [PWA]   scope: /
+> [PWA] Fallback to precache routes when fetch failed from cache or network:
+> [PWA]   document (page): /offline
  ✓ Compiled successfully
    Skipping linting
    Checking validity of types ...
    Collecting page data ...
-   Generating static pages (0/42) ...
-   Generating static pages (10/42) 
-   Generating static pages (20/42) 
-   Generating static pages (31/42) 
- ✓ Generating static pages (42/42)
+   Generating static pages (0/99) ...
+   Generating static pages (24/99) 
+   Generating static pages (49/99) 
+   Generating static pages (74/99) 
+ ✓ Generating static pages (99/99)
    Finalizing page optimization ...
    Collecting build traces ...
 
 Route (app)                                  Size     First Load JS
-┌ ○ /                                        28.8 kB         124 kB
-├ ○ /_not-found                              881 B          88.2 kB
-├ ○ /admin/migration                         4 kB           91.3 kB
-├ ○ /admin/settings                          4.91 kB        92.2 kB
+┌ ○ /                                        10.8 kB         125 kB
+├ ○ /_not-found                              880 B          88.6 kB
+├ ○ /admin                                   11 kB          98.7 kB
+├ ○ /admin/federation                        2.91 kB        90.7 kB
+├ ○ /admin/migration                         4 kB           91.8 kB
+├ ○ /admin/settings                          4.91 kB        92.7 kB
+├ ○ /ai/federation-sync                      884 B          88.6 kB
+├ ○ /ai/model-management                     2.94 kB        90.7 kB
+├ ○ /ai/movement-intelligence                1.26 kB          89 kB
+├ ○ /ai/production-intelligence              792 B          88.5 kB
+├ ○ /ai/quality-intelligence                 881 B          88.6 kB
+├ ○ /ai/warehouse-intelligence               1.07 kB        88.8 kB
+├ ○ /ai/workflow-automation                  894 B          88.6 kB
 ├ ƒ /api/auth/login                          0 B                0 B
+├ ƒ /api/auth/mfa                            0 B                0 B
+├ ƒ /api/auth/session                        0 B                0 B
 ├ ○ /api/execution/decisions                 0 B                0 B
 ├ ○ /api/execution/projects                  0 B                0 B
-├ ○ /collaboration/workspace                 5.48 kB        92.8 kB
-├ ○ /composer                                19.2 kB         109 kB
-├ ○ /employee/self-service                   6.23 kB        93.6 kB
-├ ○ /energy/grid                             3.96 kB        91.3 kB
-├ ○ /execution/comms                         4.61 kB        91.9 kB
-├ ○ /execution/decisions                     5.91 kB         136 kB
-├ ○ /execution/pmo                           3.6 kB         90.9 kB
-├ ○ /execution/projects                      37.5 kB         169 kB
-├ ○ /finance                                 7.59 kB         233 kB
-├ ○ /finance/period-close                    3.81 kB        91.1 kB
-├ ○ /hcm                                     4.41 kB        91.7 kB
-├ ○ /industries/food-beverage/transactions   7.08 kB        94.4 kB
-├ ○ /industries/healthcare/transactions      9.77 kB        97.1 kB
-├ ○ /industries/manufacturing/transactions   7.83 kB        95.2 kB
-├ ○ /industries/pharmaceutical/transactions  5.92 kB        93.3 kB
-├ ○ /industries/retail/transactions          6.94 kB        94.3 kB
-├ ○ /intelligence/agents                     4.55 kB         230 kB
-├ ○ /login                                   9.73 kB         131 kB
-├ ○ /manufacturing/shopfloor                 4.64 kB         134 kB
-├ ○ /master-data/materials                   5.51 kB        92.8 kB
-├ ○ /mobile/warehouse                        4.08 kB         126 kB
-├ ○ /notifications                           3.65 kB          91 kB
-├ ○ /operations                              3.3 kB          125 kB
-├ ○ /operations/batch-management             4.39 kB        91.7 kB
-├ ○ /operations/inventory                    3.45 kB         125 kB
-├ ○ /operations/logistics                    4.49 kB        91.8 kB
-├ ○ /operations/procurement                  5.17 kB        92.5 kB
-├ ○ /operations/production                   4.37 kB         126 kB
-├ ○ /pharma/validation                       5.44 kB         135 kB
-├ ○ /planning/mrp                            4.29 kB        91.6 kB
-├ ○ /portal                                  4.3 kB         91.6 kB
-├ ○ /portal/partner                          7.2 kB         94.5 kB
-└ ○ /retail/operations                       5.84 kB         135 kB
-+ First Load JS shared by all                87.3 kB
-  ├ chunks/8753-b9a5fc77aa305f3a.js          31.7 kB
-  ├ chunks/abf17911-a73207b654b8c312.js      53.6 kB
-  └ other shared chunks (total)              2.01 kB
+├ ƒ /api/finance/general-ledger              0 B                0 B
+├ ƒ /api/forge/marketplace                   0 B                0 B
+├ ƒ /api/forge/marketplace/[appId]/ratings   0 B                0 B
+├ ƒ /api/forge/marketplace/install           0 B                0 B
+├ ƒ /api/operations/physical-inventory       0 B                0 B
+├ ƒ /api/v1/documents                        0 B                0 B
+├ ○ /audit                                   3.79 kB        91.5 kB
+├ ○ /change-management                       2.21 kB          90 kB
+├ ○ /collaboration/workspace                 5.49 kB        93.2 kB
+├ ○ /comms                                   73.1 kB         188 kB
+├ ○ /composer                                5.71 kB         109 kB
+├ ○ /customer-portal                         3.2 kB           91 kB
+├ ○ /data-governance                         2.31 kB        90.1 kB
+├ ○ /documents                               24.4 kB         120 kB
+├ ○ /employee/self-service                   6.22 kB          94 kB
+├ ○ /energy/grid                             3.96 kB        91.7 kB
+├ ○ /execution/comms                         4.61 kB        92.4 kB
+├ ○ /execution/decisions                     7.06 kB         137 kB
+├ ○ /execution/pmo                           3.61 kB        91.4 kB
+├ ○ /execution/projects                      37.9 kB         170 kB
+├ ○ /finance                                 4.01 kB         237 kB
+├ ○ /finance/accounting                      10.3 kB         133 kB
+├ ○ /finance/general-ledger                  10.9 kB         141 kB
+├ ○ /finance/period-close                    3.81 kB        91.6 kB
+├ ○ /forge                                   5.89 kB        93.6 kB
+├ ○ /forge/builder                           19.5 kB         157 kB
+├ ○ /forge/integrations                      10.1 kB         132 kB
+├ ○ /hcm                                     4.4 kB         92.2 kB
+├ ○ /hcm/payroll                             9.55 kB         132 kB
+├ ○ /industries/food-beverage/transactions   7.09 kB        94.8 kB
+├ ○ /industries/healthcare/transactions      9.75 kB        97.5 kB
+├ ○ /industries/manufacturing/transactions   7.84 kB        95.6 kB
+├ ○ /industries/pharmaceutical/transactions  5.92 kB        93.7 kB
+├ ○ /industries/retail/transactions          6.92 kB        94.7 kB
+├ ○ /intelligence/agents                     4.97 kB         234 kB
+├ ○ /login                                   10.7 kB         133 kB
+├ ○ /maintenance                             3.69 kB        91.4 kB
+├ ○ /manifest.webmanifest                    0 B                0 B
+├ ○ /manufacturing/shopfloor                 5.79 kB         135 kB
+├ ○ /master-data                             10 kB           132 kB
+├ ○ /master-data/materials                   5.51 kB        93.3 kB
+├ ○ /migration/sap                           4.46 kB        92.2 kB
+├ ○ /mobile/warehouse                        4.12 kB         126 kB
+├ ○ /navigation/tcode                        4.2 kB           92 kB
+├ ○ /notifications                           3.65 kB        91.4 kB
+├ ○ /offline                                 763 B          88.5 kB
+├ ○ /onboarding                              9.34 kB        97.1 kB
+├ ○ /operations                              3.3 kB          126 kB
+├ ○ /operations/batch-genealogy              10.2 kB         140 kB
+├ ○ /operations/batch-management             4.39 kB        92.1 kB
+├ ○ /operations/goods-movement               13.8 kB         136 kB
+├ ○ /operations/inventory                    3.44 kB         126 kB
+├ ○ /operations/logistics                    4.48 kB        92.2 kB
+├ ○ /operations/mrp-intelligence             9.84 kB         250 kB
+├ ○ /operations/physical-inventory           23.8 kB         146 kB
+├ ○ /operations/procurement                  5.16 kB        92.9 kB
+├ ○ /operations/production                   4.37 kB         127 kB
+├ ○ /operations/quality-intelligence         8.1 kB          130 kB
+├ ○ /operations/shipments                    15.3 kB         145 kB
+├ ○ /operations/stock-transfers              4.17 kB        91.9 kB
+├ ○ /operations/storage-optimization         7.3 kB           95 kB
+├ ○ /pharma/validation                       6.6 kB          136 kB
+├ ○ /planning                                4.26 kB          92 kB
+├ ○ /planning/mrp                            4.29 kB          92 kB
+├ ○ /portal                                  4.3 kB           92 kB
+├ ○ /portal/partner                          388 B            95 kB
+├ ○ /pricing                                 6.25 kB          94 kB
+├ ○ /procurement/purchase-orders/create-ai   2.62 kB        90.4 kB
+├ ○ /profile                                 11.5 kB        99.2 kB
+├ ○ /retail/operations                       7.02 kB         137 kB
+├ ○ /sales/orders                            15.4 kB         138 kB
+├ ○ /settings/global                         3.34 kB        91.1 kB
+├ ○ /settings/offline                        2.33 kB        90.1 kB
+├ ○ /super-admin/apm                         2.75 kB        90.5 kB
+├ ○ /super-admin/business-model              4.21 kB          92 kB
+├ ○ /super-admin/dashboard                   16.8 kB         105 kB
+├ ○ /super-admin/disaster-recovery           2.89 kB        90.6 kB
+├ ○ /tenant/overview                         2.59 kB        90.3 kB
+├ ○ /traceability                            4.87 kB        92.6 kB
+└ ○ /vendor-portal                           3.34 kB        91.1 kB
++ First Load JS shared by all                87.8 kB
+  ├ chunks/4774-101a14416add1f6a.js          31.7 kB
+  ├ chunks/f6382312-574591600c3ff276.js      53.6 kB
+  └ other shared chunks (total)              2.42 kB
 
+
+ƒ Middleware                                 34 kB
 
 ○  (Static)   prerendered as static content
 ƒ  (Dynamic)  server-rendered on demand

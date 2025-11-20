@@ -1,0 +1,6 @@
+fastapi[all]==0.115.0
+langchain==0.2.12
+pulp==2.7.0
+pandas==2.2.2
+celery[redis]==5.4.0
+pydantic==2.7.4

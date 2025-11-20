@@ -1,0 +1,12 @@
+Metadata-Version: 2.4
+Name: oru-agent-orchestrator
+Version: 0.1.0
+Summary: FastAPI service that coordinates domain agents
+Requires-Python: >=3.11
+Requires-Dist: fastapi[all]==0.115.0
+Requires-Dist: langchain==0.2.12
+Requires-Dist: openai==1.37.1
+Requires-Dist: pydantic==2.7.4
+Requires-Dist: uvicorn[standard]==0.30.3
+Requires-Dist: redis==5.0.7
+Requires-Dist: celery[redis]==5.4.0

@@ -1,7 +1,7 @@
 PNPM?=pnpm
 PYTHON?=python
 
-.PHONY: install dev build lint typecheck test db-up db-down agents
+.PHONY: install dev build lint typecheck test db-up db-down agents infra-validate
 
 install:
 	$(PNPM) install
@@ -29,3 +29,6 @@ db-down:
 
 agents:
 	$(PYTHON) -m pip install -r agents-requirements.txt
+
+infra-validate:
+	node scripts/validate-infra.mjs

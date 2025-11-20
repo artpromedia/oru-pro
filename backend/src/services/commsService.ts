@@ -37,6 +37,8 @@ export type MessageDTO = {
   updatedAt: string;
 };
 
+type ReactionRecord = Prisma.CommsReactionGetPayload<Record<string, never>>;
+
 export type CreateMessageInput = {
   channelId: string;
   authorId: string;
@@ -77,7 +79,7 @@ const mapMessage = (message: Prisma.CommsMessageGetPayload<{ include: typeof mes
   updatedAt: message.updatedAt.toISOString(),
 });
 
-const aggregateReactions = (reactions: Prisma.CommsReactionGetPayload<{}>[]) => {
+const aggregateReactions = (reactions: ReactionRecord[]) => {
   const grouped = new Map<string, { emoji: string; users: Array<{ id: string; name: string }> }>();
   reactions.forEach((reaction) => {
     const existing = grouped.get(reaction.emoji) ?? { emoji: reaction.emoji, users: [] };

@@ -1,5 +1,5 @@
 import { randomUUID, createHash } from "node:crypto";
-import type { Document, HandlingUnit } from "@prisma/client";
+import type { Document, HandlingUnit, Prisma } from "@prisma/client";
 import { prisma } from "../lib/prisma.js";
 
 export type ShipmentStatus = "planned" | "loading" | "in-transit" | "delivered" | "exception";
@@ -27,14 +27,16 @@ type ShipmentVehicle = {
   capacity: number;
 };
 
-type ShipmentDocument = {
-  id: string;
+type ShipmentDocumentInput = {
+  id?: string;
   type: string;
-  status: string;
-  owner: string;
-  updatedAt: string;
+  status?: string;
+  owner?: string;
+  updatedAt?: string;
   storageUrl?: string;
 };
+
+type ShipmentDocument = Required<Omit<ShipmentDocumentInput, "storageUrl">> & Pick<ShipmentDocumentInput, "storageUrl">;
 
 type ShipmentEvent = {
   id: string;
@@ -52,6 +54,23 @@ type ShipmentSensor = {
   status: "ok" | "warning" | "critical";
   timestamp: string;
 };
+
+type ShipmentMetadata = {
+  type: ShipmentType;
+  status: ShipmentStatus;
+  carrier: LogisticsShipment["carrier"];
+  deliveries: string[];
+  route: ShipmentRoute;
+  vehicle: ShipmentVehicle;
+  scheduledDate: string;
+  actualDate: string | null;
+  tracking: string;
+  documents: ShipmentDocument[];
+  costs: LogisticsShipment["costs"];
+  events: ShipmentEvent[];
+  sensors: ShipmentSensor[];
+  createdBy: string;
+} & Record<string, unknown>;
 
 export type LogisticsShipment = {
   id: string;
@@ -85,7 +104,7 @@ export type CreateShipmentInput = {
   scheduledDate?: string;
   actualDate?: string | null;
   tracking?: string;
-  documents?: ShipmentDocument[];
+  documents?: ShipmentDocumentInput[];
   costs?: LogisticsShipment["costs"];
   events?: ShipmentEvent[];
   sensors?: ShipmentSensor[];
@@ -143,14 +162,15 @@ const sanitizeStatus = (status?: string | null): ShipmentStatus =>
 const sanitizeType = (type?: string | null): ShipmentType =>
   TYPE_VALUES.includes(type as ShipmentType) ? (type as ShipmentType) : "outbound";
 
-const ensureDocuments = (documents?: ShipmentDocument[], shipmentNumber?: string): ShipmentDocument[] => {
+const ensureDocuments = (documents?: ShipmentDocumentInput[], shipmentNumber?: string): ShipmentDocument[] => {
   if (documents && documents.length > 0) {
     return documents.map((doc) => ({
-      ...doc,
       id: doc.id ?? randomUUID(),
+      type: doc.type,
       status: doc.status ?? "ready",
       owner: doc.owner ?? "Transport Bot",
       updatedAt: doc.updatedAt ?? new Date().toISOString(),
+      storageUrl: doc.storageUrl,
     }));
   }
 
@@ -187,10 +207,10 @@ const ensureSensors = (sensors?: ShipmentSensor[]): ShipmentSensor[] => {
       status: "ok",
       timestamp: now,
     },
-  ].map((sensor) => ({ ...sensor }));
+  ] satisfies ShipmentSensor[];
 };
 
-const buildMetadata = (input: CreateShipmentInput, shipmentNumber: string) => {
+const buildMetadata = (input: CreateShipmentInput, shipmentNumber: string): ShipmentMetadata => {
   const documents = ensureDocuments(input.documents, shipmentNumber);
   const events = ensureEvents(input.events);
   const sensors = ensureSensors(input.sensors);
@@ -210,7 +230,7 @@ const buildMetadata = (input: CreateShipmentInput, shipmentNumber: string) => {
     events,
     sensors,
     createdBy: input.createdBy ?? "transport-bot",
-  } satisfies Record<string, unknown>;
+  } satisfies ShipmentMetadata;
 };
 
 const toDocumentSummary = (doc: Document): ShipmentDocument => ({
@@ -236,37 +256,43 @@ const groupDocumentsByShipment = (documents: Document[]) => {
   return map;
 };
 
-const attachDocumentsToMetadata = (metadata: Record<string, unknown>, docs: ShipmentDocument[]) => ({
+const attachDocumentsToMetadata = (metadata: ShipmentMetadata, docs: ShipmentDocument[]): ShipmentMetadata => ({
   ...metadata,
   documents: docs,
 });
 
 const transformShipment = (handlingUnit: HandlingUnit, documents: ShipmentDocument[] = []): LogisticsShipment => {
-  const rawMetadata = (handlingUnit.metadata ?? {}) as Record<string, unknown>;
-  const metadata = attachDocumentsToMetadata(rawMetadata, documents.length ? documents : (rawMetadata.documents as ShipmentDocument[] | undefined) ?? []);
+  const baseMetadata = buildMetadata({ tenantId: handlingUnit.tenantId }, handlingUnit.huNumber);
+  const rawMetadata = (handlingUnit.metadata as Partial<ShipmentMetadata>) ?? {};
+  const hydratedMetadata: ShipmentMetadata = {
+    ...baseMetadata,
+    ...rawMetadata,
+    documents: documents.length ? documents : (rawMetadata.documents as ShipmentDocument[] | undefined) ?? baseMetadata.documents,
+  };
+  const metadata = attachDocumentsToMetadata(hydratedMetadata, hydratedMetadata.documents);
 
-  const carrier = (metadata.carrier as LogisticsShipment["carrier"]) ?? { name: "Carrier", id: "carrier", rating: 4.5 };
-  const route = (metadata.route as ShipmentRoute) ?? defaultRoute();
-  const vehicle = (metadata.vehicle as ShipmentVehicle) ?? defaultVehicle();
-  const deliveries = (metadata.deliveries as string[]) ?? [];
-  const costs = (metadata.costs as LogisticsShipment["costs"]) ?? { freight: 0, fuel: 0, total: 0 };
-  const events = (metadata.events as ShipmentEvent[]) ?? [];
-  const sensors = (metadata.sensors as ShipmentSensor[]) ?? [];
-  const docs = (metadata.documents as ShipmentDocument[]) ?? [];
+  const carrier = metadata.carrier ?? { name: "Carrier", id: "carrier", rating: 4.5 };
+  const route = metadata.route ?? defaultRoute();
+  const vehicle = metadata.vehicle ?? defaultVehicle();
+  const deliveries = metadata.deliveries ?? [];
+  const costs = metadata.costs ?? { freight: 0, fuel: 0, total: 0 };
+  const events = metadata.events ?? [];
+  const sensors = metadata.sensors ?? [];
+  const docs = metadata.documents ?? [];
 
   return {
     id: handlingUnit.id,
     tenantId: handlingUnit.tenantId,
     shipmentNumber: handlingUnit.huNumber,
-    status: sanitizeStatus((metadata.status as string) ?? handlingUnit.status),
-    type: sanitizeType(metadata.type as string),
+  status: sanitizeStatus(metadata.status ?? handlingUnit.status),
+  type: sanitizeType(metadata.type),
     carrier,
     deliveries,
     route,
     vehicle,
-    scheduledDate: (metadata.scheduledDate as string) ?? new Date().toISOString().slice(0, 10),
-    actualDate: (metadata.actualDate as string | null) ?? null,
-    tracking: (metadata.tracking as string) ?? `GPS-${Math.random().toString().slice(2, 7)}`,
+  scheduledDate: metadata.scheduledDate ?? new Date().toISOString().slice(0, 10),
+  actualDate: metadata.actualDate ?? null,
+  tracking: metadata.tracking ?? `GPS-${Math.random().toString().slice(2, 7)}`,
     documents: docs,
     costs,
     events,
@@ -348,7 +374,7 @@ export const logisticsService = {
         tenantId: input.tenantId,
         huNumber: shipmentNumber,
         status: metadata.status,
-        metadata,
+        metadata: metadata as Prisma.InputJsonValue,
       },
     });
 
@@ -365,13 +391,16 @@ export const logisticsService = {
       throw new Error("Shipment not found");
     }
 
-    const metadata = { ...(handlingUnit.metadata as Record<string, unknown>), status: sanitizeStatus(input.status) };
-    const events = (metadata.events as ShipmentEvent[] | undefined) ?? [];
+    const metadata = {
+      ...(handlingUnit.metadata as ShipmentMetadata | undefined),
+      status: sanitizeStatus(input.status),
+    } as ShipmentMetadata;
+    const events = metadata.events ?? [];
     metadata.events = [
       {
         id: `status-${Date.now()}`,
         timestamp: new Date().toISOString(),
-        location: ((metadata.route as ShipmentRoute) ?? defaultRoute()).destination.name,
+        location: (metadata.route ?? defaultRoute()).destination.name,
         detail: `Status updated to ${input.status}`,
         type: "milestone",
       },
@@ -382,7 +411,7 @@ export const logisticsService = {
       where: { id: handlingUnit.id },
       data: {
         status: input.status,
-        metadata,
+        metadata: metadata as Prisma.InputJsonValue,
       },
     });
 

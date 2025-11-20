@@ -1,0 +1,9 @@
+Metadata-Version: 2.4
+Name: oru-decision-engine
+Version: 0.1.0
+Requires-Python: >=3.11
+Requires-Dist: fastapi[all]==0.115.0
+Requires-Dist: pandas==2.2.2
+Requires-Dist: prophet==1.1.5
+Requires-Dist: pulp==2.7.0
+Requires-Dist: uvicorn[standard]==0.30.3

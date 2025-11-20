@@ -1,0 +1,7 @@
+pyproject.toml
+src/copilot_agent.py
+src/inventory_agent.egg-info/PKG-INFO
+src/inventory_agent.egg-info/SOURCES.txt
+src/inventory_agent.egg-info/dependency_links.txt
+src/inventory_agent.egg-info/requires.txt
+src/inventory_agent.egg-info/top_level.txt
